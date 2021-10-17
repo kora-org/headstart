@@ -3,32 +3,24 @@
 jmp short load_stage0
 nop
 
-OEMLabel              db "XEPTO   "
-BytesPerSector        dw 0x0200
-SectorsPerCluster     db 0x08
-ReservedSectors       dw 0x0020
-TotalFATs             db 0x02
-MaxRootEntries        dw 0x0000
-NumberOfSectors       dw 0x0000
-MediaDescriptor       db 0xF8
-SectorsPerFAT         dw 0x0000
-SectorsPerTrack       dw 0x003D
-SectorsPerHead        dw 0x0002
-HiddenSectors         dd 0x00000000
-TotalSectors          dd 0x00FE3B1F
-BigSectorsPerFAT      dd 0x00000778
-Flags                 dw 0x0000
-FSVersion             dw 0x0000
-RootDirectoryStart    dd 0x00000002
-FSInfoSector          dw 0x0001
-BackupBootSector      dw 0x0006
-times 12 db 0
-DriveNumber           db 0x00
-ReservedByte          db 0x00
-Signature             db 0x29
-VolumeID              dd 0xFFFFFFFF
-VolumeLabel           db "XEPTOBOOT  "
-SystemID              db "FAT32   "
+OEMLabel          db "XEPTBOOT"
+BytesPerSector    dw 512
+SectorsPerCluster db 1
+ReservedForBoot   dw 1
+NumberOfFats      db 2
+RootDirEntries    dw 224
+LogicalSectors    dw 2880
+MediumByte        db 0xF0
+SectorsPerFat     dw 9
+SectorsPerTrack   dw 18
+Sides             dw 2
+HiddenSectors     dd 0
+LargeSectors      dd 0
+DriveNo           dw 0
+Signature         db 41
+VolumeID          dd 00000000h
+VolumeLabel       db "XeptoBoot  "
+FileSystem        db "FAT12   "
 
 STAGE1_OFFSET equ 0x7e00
 
