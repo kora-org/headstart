@@ -1,0 +1,16 @@
+build/
+
+*.d
+
+*.o
+*.bin
+*.elf
+
+*.ilk
+*.map
+*.exp
+
+*.lib
+*.a
+*.la
+*.lo
