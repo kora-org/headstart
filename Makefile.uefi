@@ -1,0 +1,8 @@
+ARCH = x86_64
+TARGET = build/xeptoboot.efi
+SRCS = $(wildcard stage1/uefi/*.c common/*.c)
+CFLAGS = -O0 -g
+LDFLAGS =
+LIBS = -lm
+
+include external/posix-uefi/uefi/Makefile
