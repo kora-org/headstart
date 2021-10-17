@@ -1,3 +1,0 @@
-[submodule "external/posix-uefi"]
-	path = external/posix-uefi
-	url = https://gitlab.com/bztsrc/posix-uefi
