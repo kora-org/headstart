@@ -12,7 +12,7 @@ STAGE1_SRC := $(wildcard stage1/*.c stage1/*/*.c stage1/*.s stage1/*/*.s)
 STAGE1_OBJ := $(patsubst stage1/%, build/stage1/%.o, $(STAGE1_SRC:%.c=%))
 STAGE1_OBJ += $(patsubst stage1/%, build/stage1/%.o, $(STAGE1_OBJ:%.s=%))
 
-all: $(shell mkdir -p build/stage0 build/stage1) run
+all: $(shell mkdir -p build/stage0 build/stage1) build/xeptoboot.bin
 
 build/stage1.bin: $(STAGE1_OBJ)
 	$(LD) $(LDFLAGS) $(LDHARDFLAGS) $^ -o $@
@@ -30,7 +30,7 @@ build/xeptoboot.bin: build/stage0.bin build/stage1.bin
 	cat $^ > $@
 
 run: build/xeptoboot.bin
-	qemu-system-i386 -fda $<
+	qemu-system-i386 -fda $< -debugcon stdio
 
 clean:
 	$(RM)r build
