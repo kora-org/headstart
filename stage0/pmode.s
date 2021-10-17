@@ -19,4 +19,4 @@ init_32bit:
     mov ebp, 0x7e00
     mov esp, ebp
 
-    call load_32bit
+    call start_stage1
