@@ -3,9 +3,9 @@ LD := ld.lld
 AS := nasm
 
 CFLAGS := -O0 -g
-CHARDFLAGS := -ffreestanding
+CHARDFLAGS := -nostdlib -ffreestanding
 LDFLAGS :=
-LDHARDFLAGS := -m elf_i386 -Ttext 0x1000 --oformat binary
+LDHARDFLAGS := -T linker.ld --oformat binary
 ASFLAGS := -F dwarf
 
 STAGE1_SRC := $(wildcard stage1/*.c stage1/*/*.c stage1/*.s stage1/*/*.s)
