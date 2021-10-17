@@ -1,7 +1,7 @@
 [bits 16]
 [org 0x7c00]
 
-STAGE1_OFFSET equ 1000h
+STAGE1_OFFSET equ 0x7e00
 
 mov [BOOT_DRIVE], dl
 
