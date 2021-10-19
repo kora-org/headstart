@@ -1,23 +1,15 @@
 #include <efi.h>
 #include <efilib.h>
 #include <stdbool.h>
+#include <keyboard.h>
+#include <uefi_common.h>
 
 EFI_SYSTEM_TABLE *ST;
-EFI_SYSTEM_TABLE *gST;
-
-EFI_STATUS kbhit(struct EFI_INPUT_KEY *Key) {
-    return ST->ConIn->ReadKeyStroke(ST->ConIn, Key);
-}
-
-EFI_STATUS get_keystroke(struct EFI_INPUT_KEY *Key) {
-    //ST->ConIn->WaitForKey(0);
-    return ST->ConIn->ReadKeyStroke(ST->ConIn, Key);
-}
 
 EFI_STATUSefi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
-    EFI_INPUT_KEY *input;
     ST = SystemTable;
-    gST = SystemTable;
+
+    EFI_INPUT_KEY *input;
     ST->ConOut->Reset(ST->ConOut, 0);
     ST->ConIn->Reset(ST->ConIn, 0);
     ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGREEN);
@@ -36,6 +28,8 @@ EFI_STATUSefi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         get_keystroke(input);
         if (input->UnicodeChar == CHAR_CARRIAGE_RETURN)
             ST->ConOut->OutputString(ST->ConOut, L"\r\n");
+        else if (input->UnicodeChar == CHAR_BACKSPACE)
+            ST->ConOut->OutputString(ST->ConOut, L"\b");
 
         ST->ConOut->OutputString(ST->ConOut, &input->UnicodeChar);
     }

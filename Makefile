@@ -3,7 +3,7 @@ LD := ld.lld
 AS := nasm
 
 CFLAGS := -O0 -g
-CHARDFLAGS := -ffreestanding -Icommon
+CHARDFLAGS := -ffreestanding -fno-stack-protector -Istage1 -Icommon
 LDFLAGS :=
 LDHARDFLAGS := -nostdlib -T linker.ld --oformat binary
 ASFLAGS := -F dwarf

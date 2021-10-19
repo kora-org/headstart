@@ -5,7 +5,7 @@ AR := llvm-ar
 OBJCOPY := llvm-objcopy
 
 CFLAGS := -O0 -g
-CHARDFLAGS := -DGNU_EFI_USE_MS_ABI -ffreestanding -fno-stack-protector -fshort-wchar -mno-red-zone -Icommon -Iexternal/gnu-efi/inc -Iexternal/gnu-efi/inc/x86_64 -Iexternal/gnu-efi/inc/protocol
+CHARDFLAGS := -ffreestanding -fno-stack-protector -fshort-wchar -mno-red-zone -Istage1/uefi -Icommon -Iexternal/gnu-efi/inc -Iexternal/gnu-efi/inc/x86_64 -Iexternal/gnu-efi/inc/protocol
 LDFLAGS :=
 LDHARDFLAGS := /subsystem:efi_application /nodefaultlib /entry:efi_main
 ASFLAGS :=
