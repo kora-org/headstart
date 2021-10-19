@@ -3,9 +3,9 @@ LD := ld.lld
 AS := nasm
 
 CFLAGS := -O0 -g
-CHARDFLAGS := -nostdlib -ffreestanding -Icommon
+CHARDFLAGS := -ffreestanding -Icommon
 LDFLAGS :=
-LDHARDFLAGS := -T linker.ld --oformat binary
+LDHARDFLAGS := -nostdlib -T linker.ld --oformat binary
 ASFLAGS := -F dwarf
 
 COMMON_SRC := $(wildcard common/*.c common/*/*.c)
