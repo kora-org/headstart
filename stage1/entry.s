@@ -1,4 +1,5 @@
 [bits 32]
 [extern start]
-call start
-jmp $
+_start:
+    call start
+    jmp $
