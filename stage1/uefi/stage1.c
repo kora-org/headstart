@@ -3,16 +3,19 @@
 #include <stdbool.h>
 #include <keyboard.h>
 #include <uefi_common.h>
+#include <elf_loader.h>
 
-EFI_SYSTEM_TABLE *ST;
+EFI_HANDLE *ImageHandle;
 
-EFI_STATUSefi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
+EFI_STATUSefi_main (EFI_HANDLE _ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     ST = SystemTable;
+    ImageHandle = _ImageHandle;
+    BS = SystemTable->BootServices;
 
     EFI_INPUT_KEY *input;
     ST->ConOut->Reset(ST->ConOut, 0);
     ST->ConIn->Reset(ST->ConIn, 0);
-    ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGREEN);
+    /*ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGREEN);
     ST->ConOut->OutputString(ST->ConOut, L"\r\n  XeptoBoot ");
     ST->ConOut->SetAttribute(ST->ConOut, EFI_LIGHTGRAY);
     ST->ConOut->OutputString(ST->ConOut, L"0.1\r\n\r\n");
@@ -32,7 +35,9 @@ EFI_STATUSefi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             ST->ConOut->OutputString(ST->ConOut, L"\b");
 
         ST->ConOut->OutputString(ST->ConOut, &input->UnicodeChar);
-    }
+    }*/
+    ST->ConOut->OutputString(ST->ConOut, L"Loading kernel.elf...\r\n");
+    load_elf(L"kernel.elf");
 
     while (true)
         asm("hlt");
