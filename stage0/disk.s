@@ -8,9 +8,11 @@ disk_load:
     mov ch, 00h
     mov dh, 00h
 
-    cmp dl, 0x80
+    cmp dl, 80h
     jc floppy_error
 
+    mov ah, 41h
+    mov bx, 0x55aa
     int 13h
     jc disk_error
 
@@ -42,5 +44,6 @@ sectors_error:
 .msg: db "[panic] Sector error. System halted.", 0
 
 disk_loop:
-    hlt
-    jmp $
+    sti
+    .loop: hlt
+    jmp .loop
