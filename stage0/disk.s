@@ -8,6 +8,9 @@ disk_load:
     mov ch, 00h
     mov dh, 00h
 
+    cmp dl, 0x80
+    jc floppy_error
+
     int 13h
     jc disk_error
 
@@ -17,19 +20,26 @@ disk_load:
     popa
     ret
 
+floppy_error:
+    mov si, .msg
+    call print
+    jmp disk_loop
+
+.msg: db "[panic] XeptoBoot isn't designed for floppy disks. Aborting.", 0
+
 disk_error:
     mov si, .msg
     call print
     jmp disk_loop
 
-.msg: db "[panic] Disk error. System halted", 0
+.msg: db "[panic] Disk error. System halted.", 0
 
 sectors_error:
     mov si, .msg
     call print
     jmp disk_loop
 
-.msg: db "[panic] Sector error. System halted", 0
+.msg: db "[panic] Sector error. System halted.", 0
 
 disk_loop:
     hlt

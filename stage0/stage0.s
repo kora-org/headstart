@@ -19,7 +19,7 @@ LargeSectors      dd 0
 DriveNo           dw 0
 Signature         db 41
 VolumeID          dd 00000000h
-VolumeLabel       db "XeptoBoot  "
+VolumeLabel       db "XeptoBoot01"
 FileSystem        db "FAT12   "
 
 STAGE1_OFFSET equ 0x7e00
