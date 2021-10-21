@@ -3,9 +3,9 @@ LD := ld.lld
 AS := nasm
 
 CFLAGS := -O0 -g
-CHARDFLAGS := -ffreestanding -fno-stack-protector -Istage1 -Icommon
+CHARDFLAGS := -nostdlib -ffreestanding -fno-stack-protector -Istage1 -Icommon
 LDFLAGS :=
-LDHARDFLAGS := -nostdlib -T linker.ld --oformat binary
+LDHARDFLAGS := -T linker.ld --oformat binary
 ASFLAGS := -F dwarf
 
 COMMON_SRC := $(wildcard common/*.c common/*/*.c)
@@ -21,7 +21,7 @@ build/stage1.bin: $(COMMON_OBJ) $(STAGE1_OBJ)
 	$(LD) $(LDFLAGS) $(LDHARDFLAGS) $^ -o $@
 
 build/stage1/%.s.o: stage1/%.s
-	$(AS) $< $(ASFLAGS) -f elf -o $@
+	$(AS) $< $(ASFLAGS) -f elf32 -o $@
 
 build/stage1/%.o: stage1/%.c
 	$(CC) $(CFLAGS) $(CHARDFLAGS) -c $< -o $@

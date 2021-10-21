@@ -47,6 +47,19 @@ load_stage1:
     call disk_load
     ret
 
+print:
+	mov ah, 0x0e
+
+.print_loop:
+	lodsb
+	test al, al
+	jz .end
+	int 0x10
+	jmp .print_loop
+
+.end:
+	ret
+
 [bits 32]
 start_stage1:
     call STAGE1_OFFSET

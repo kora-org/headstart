@@ -18,10 +18,19 @@ disk_load:
     ret
 
 disk_error:
+    mov si, .msg
+    call print
     jmp disk_loop
+
+.msg: db "[panic] Disk error. System halted", 0
 
 sectors_error:
+    mov si, .msg
+    call print
     jmp disk_loop
 
+.msg: db "[panic] Sector error. System halted", 0
+
 disk_loop:
+    hlt
     jmp $
