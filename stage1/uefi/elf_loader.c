@@ -4,14 +4,18 @@
 #include <elf.h>
 #include <elf_loader.h>
 
-static EFI_FILE* load_file(EFI_FILE* directory, CHAR16* path, EFI_HANDLE image_handle, EFI_SYSTEM_TABLE* system_table) {
-    EFI_FILE* loaded_file;
+typedef struct {
+	void (*print)(CHAR16 *);
+} xeptoboot_hdr;
 
-    EFI_LOADED_IMAGE_PROTOCOL* loaded_image;
-    system_table->BootServices->HandleProtocol(image_handle, &gEfiLoadedImageProtocolGuid, (void**)&loaded_image);
+static EFI_FILE *load_file(EFI_FILE *directory, CHAR16 *path) {
+    EFI_FILE *loaded_file;
 
-    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* filesystem;
-    system_table->BootServices->HandleProtocol(loaded_image->DeviceHandle, &gEfiSimpleFileSystemProtocolGuid, (void**)&filesystem);
+    EFI_LOADED_IMAGE_PROTOCOL *loaded_image;
+    BS->HandleProtocol(ImageHandle, &gEfiLoadedImageProtocolGuid, (void **)&loaded_image);
+
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *filesystem;
+    BS->HandleProtocol(loaded_image->DeviceHandle, &gEfiSimpleFileSystemProtocolGuid, (void **)&filesystem);
 
     if (directory == NULL) {
         filesystem->OpenVolume(filesystem, &directory);
@@ -25,43 +29,49 @@ static EFI_FILE* load_file(EFI_FILE* directory, CHAR16* path, EFI_HANDLE image_h
     return loaded_file;
 }
 
-EFI_STATUS load_elf(CHAR16* path) {
-    EFI_FILE* kernel = load_file(NULL, path, ImageHandle, ST);
+static void xeptoboot_print(CHAR16 *str) {
+    ST->ConOut->OutputString(ST->ConOut, str);
+}
+
+EFI_STATUS load_elf(CHAR16 *path) {
+    EFI_FILE *kernel = load_file(NULL, path);
     if (kernel == NULL) {
-        ST->ConOut->OutputString(ST->ConOut, L"[panic] Could not load kernel\n\r");
+        ST->ConOut->OutputString(ST->ConOut, L"Could not load kernel.\r\n");
+        return EFI_LOAD_ERROR;
     }
 
     Elf64_Ehdr header;
     {
         UINTN file_info_size;
-        EFI_FILE_INFO* file_info;
+        EFI_FILE_INFO *file_info;
         kernel->GetInfo(kernel, &gEfiFileInfoGuid, &file_info_size, NULL);
-        BS->AllocatePool(EfiLoaderData, file_info_size, (void**)&file_info);
-        kernel->GetInfo(kernel, &gEfiFileInfoGuid, &file_info_size, (void**)&file_info);
+        BS->AllocatePool(EfiLoaderData, file_info_size, (void **)&file_info);
+        kernel->GetInfo(kernel, &gEfiFileInfoGuid, &file_info_size, (void **)&file_info);
         UINTN size = sizeof(header);
         kernel->Read(kernel, &size, &header);
     }
 
-    if (memcmp(&header.e_ident[EI_MAG0], ELFMAG, SELFMAG) != 0 ||
-        header.e_ident[EI_CLASS] != ELFCLASS64 ||
-        header.e_ident[EI_DATA] != ELFDATA2LSB ||
-        header.e_type != ET_EXEC ||
-        header.e_machine != EM_X86_64 ||
+    if (memcmp(&header.e_ident[EI_MAG0], ELFMAG, SELFMAG) != 0 &&
+        header.e_ident[EI_CLASS] != ELFCLASS64 &&
+        header.e_ident[EI_DATA] != ELFDATA2LSB &&
+        header.e_type != ET_EXEC &&
+        header.e_machine != EM_X86_64 &&
         header.e_version != EV_CURRENT) {
-        ST->ConOut->OutputString(ST->ConOut, L"[panic] Kernel header is invalid\n\r");
+        ST->ConOut->OutputString(ST->ConOut, L"Kernel header is invalid.\r\n");
+        return EFI_LOAD_ERROR;
     }
 
-    Elf64_Phdr* phdrs;
+    Elf64_Phdr *phdrs;
     {
         kernel->SetPosition(kernel, header.e_phoff);
         UINTN size = header.e_phnum * header.e_phentsize;
-        BS->AllocatePool(EfiLoaderData, size, (void**)&phdrs);
+        BS->AllocatePool(EfiLoaderData, size, (void **)&phdrs);
         kernel->Read(kernel, &size, phdrs);
     }
 
-    for (Elf64_Phdr* phdr = phdrs;
-        (char*)phdr < (char*)phdrs + header.e_phnum * header.e_phentsize;
-        phdr = (Elf64_Phdr*)((char*)phdr + header.e_phentsize)) {
+    for (Elf64_Phdr *phdr = phdrs;
+        (char *)phdr < (char *)phdrs + header.e_phnum * header.e_phentsize;
+        phdr = (Elf64_Phdr *)((char *)phdr + header.e_phentsize)) {
         switch (phdr->p_type) {
             case PT_LOAD: {
                 int pages = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
@@ -70,14 +80,15 @@ EFI_STATUS load_elf(CHAR16* path) {
 
                 kernel->SetPosition(kernel, phdr->p_offset);
                 UINTN size = phdr->p_filesz;
-                kernel->Read(kernel, &size, (void*)segment);
+                kernel->Read(kernel, &size, (void *)segment);
                 break;
             }
         }
     }
 
-    int (*kernel_start)() = ((__attribute__((sysv_abi)) int (*)() ) header.e_entry);
-    if (kernel_start())
-        ST->ConOut->OutputString(ST->ConOut, L"Kernel successfully started\n\r");
-        return EFI_SUCCESS;
+    void (*kernel_start)(xeptoboot_hdr *) = ((__attribute__((sysv_abi))void(*)(xeptoboot_hdr *))header.e_entry);
+    xeptoboot_hdr *xeptoboot;
+    xeptoboot->print = xeptoboot_print;
+    kernel_start(xeptoboot);
+    return EFI_SUCCESS;
 }

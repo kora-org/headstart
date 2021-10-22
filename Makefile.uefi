@@ -7,7 +7,7 @@ OBJCOPY := llvm-objcopy
 CFLAGS := -O0 -g
 CHARDFLAGS := -ffreestanding -fno-stack-protector -fshort-wchar -mno-red-zone -Istage1/uefi -Icommon -Iexternal/gnu-efi/inc -Iexternal/gnu-efi/inc/x86_64 -Iexternal/gnu-efi/inc/protocol
 LDFLAGS :=
-LDHARDFLAGS := /subsystem:efi_application /nodefaultlib /entry:efi_main
+LDHARDFLAGS := /subsystem:efi_application /nodefaultlib /dll /entry:efi_main
 ASFLAGS :=
 
 COMMON_SRC := $(wildcard common/*.c common/*/*.c)
@@ -33,8 +33,8 @@ build/common/uefi/%.obj: common/%.c
 
 run: build/xeptoboot.efi
 	mkdir -p build/efi-root/EFI/BOOT
-	clang -target x86_64-elf -ffreestanding -fshort-wchar -mno-red-zone -c kernel-example/main.c -o build/efi-root/kernel.o
-	ld.lld -Tkernel-example/linker.ld -static -Bsymbolic -nostdlib build/efi-root/kernel.o -o build/efi-root/kernel.elf
+	clang -target x86_64-elf $(CFLAGS) $(CHARDFLAGS) -c kernel-example/main.c -o build/efi-root/kernel.o
+	ld.lld -Tkernel-example/linker.ld -nostdlib build/efi-root/kernel.o -o build/efi-root/kernel.elf
 	cp $< build/efi-root/EFI/BOOT/BOOTX64.EFI
 	qemu-system-x86_64 -hda fat:rw:build/efi-root -pflash external/ovmf-prebuilt/bin/DEBUGX64_OVMF.fd -debugcon stdio
 

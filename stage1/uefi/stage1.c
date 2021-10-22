@@ -37,7 +37,8 @@ EFI_STATUSefi_main (EFI_HANDLE _ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         ST->ConOut->OutputString(ST->ConOut, &input->UnicodeChar);
     }*/
     ST->ConOut->OutputString(ST->ConOut, L"Loading kernel.elf...\r\n");
-    load_elf(L"kernel.elf");
+    if (load_elf(L"kernel.elf") != EFI_SUCCESS)
+        ST->ConOut->OutputString(ST->ConOut, L"[panic] Kernel failed to load.\n\r");
 
     while (true)
         asm("hlt");
