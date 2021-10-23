@@ -5,12 +5,16 @@
 #include <uefi_common.h>
 #include <elf_loader.h>
 
-EFI_HANDLE *ImageHandle;
+EFI_SYSTEM_TABLE *ST;
+EFI_HANDLE IM;
+EFI_BOOT_SERVICES *BS;
+EFI_RUNTIME_SERVICES *RT;
 
-EFI_STATUSefi_main (EFI_HANDLE _ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
+EFI_STATUSefi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     ST = SystemTable;
-    ImageHandle = _ImageHandle;
+    IM = ImageHandle;
     BS = SystemTable->BootServices;
+    RT = SystemTable->RuntimeServices;
 
     EFI_INPUT_KEY *input;
     ST->ConOut->Reset(ST->ConOut, 0);

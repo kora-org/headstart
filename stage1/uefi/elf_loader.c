@@ -11,17 +11,19 @@ typedef struct {
 static EFI_FILE *load_file(EFI_FILE *directory, CHAR16 *path) {
     EFI_FILE *loaded_file;
 
-    EFI_LOADED_IMAGE_PROTOCOL *loaded_image;
-    BS->HandleProtocol(ImageHandle, &gEfiLoadedImageProtocolGuid, (void **)&loaded_image);
+    EFI_LOADED_IMAGE *loaded_image;
+    EFI_GUID loaded_image_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+    BS->HandleProtocol(IM, &loaded_image_guid, (void **)&loaded_image);
 
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *filesystem;
-    BS->HandleProtocol(loaded_image->DeviceHandle, &gEfiSimpleFileSystemProtocolGuid, (void **)&filesystem);
+    EFI_GUID fs_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
+    BS->HandleProtocol(loaded_image->DeviceHandle, &fs_guid, (void **)&filesystem);
 
     if (directory == NULL) {
         filesystem->OpenVolume(filesystem, &directory);
     }
 
-    EFI_STATUS s = directory->Open(directory, &loaded_file, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY);
+    EFI_STATUS s = directory->Open(directory, &loaded_file, path, EFI_FILE_MODE_READ, EFI_FILE_READ_ONLY | EFI_FILE_HIDDEN | EFI_FILE_SYSTEM);
     if (s != EFI_SUCCESS) {
         return NULL;
     }
@@ -44,9 +46,10 @@ EFI_STATUS load_elf(CHAR16 *path) {
     {
         UINTN file_info_size;
         EFI_FILE_INFO *file_info;
-        kernel->GetInfo(kernel, &gEfiFileInfoGuid, &file_info_size, NULL);
+        EFI_GUID file_info_guid = EFI_FILE_INFO_ID;
+        kernel->GetInfo(kernel, &file_info_guid, &file_info_size, NULL);
         BS->AllocatePool(EfiLoaderData, file_info_size, (void **)&file_info);
-        kernel->GetInfo(kernel, &gEfiFileInfoGuid, &file_info_size, (void **)&file_info);
+        kernel->GetInfo(kernel, &file_info_guid, &file_info_size, (void **)&file_info);
         UINTN size = sizeof(header);
         kernel->Read(kernel, &size, &header);
     }
