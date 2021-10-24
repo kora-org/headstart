@@ -5,7 +5,7 @@
 #include <elf_loader.h>
 
 typedef struct {
-	void (*print)(CHAR16 *);
+    void (*print)(CHAR16 *);
 } xeptoboot_hdr;
 
 static EFI_FILE *load_file(EFI_FILE *directory, CHAR16 *path) {
@@ -89,9 +89,23 @@ EFI_STATUS load_elf(CHAR16 *path) {
         }
     }
 
+    /*EFI_MEMORY_DESCRIPTOR *map;
+    UINTN map_size, map_key;
+    UINTN descriptor_size;
+    UINT32 descriptor_version;
+    {
+        BS->GetMemoryMap(&map_size, map, &map_key, &descriptor_size, &descriptor_version);
+        BS->AllocatePool(EfiLoaderData, map_size, (void **)&map);
+        BS->GetMemoryMap(&map_size, map, &map_key, &descriptor_size, &descriptor_version);
+    }
+
+    BS->ExitBootServices(IM, map_key);*/
     void (*kernel_start)(xeptoboot_hdr *) = ((__attribute__((sysv_abi))void(*)(xeptoboot_hdr *))header.e_entry);
+
     xeptoboot_hdr *xeptoboot;
+    BS->AllocatePool(EfiLoaderData, sizeof(xeptoboot), (void **)&xeptoboot);
     xeptoboot->print = xeptoboot_print;
+
     kernel_start(xeptoboot);
     return EFI_SUCCESS;
 }

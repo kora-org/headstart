@@ -7,7 +7,7 @@ OBJCOPY := llvm-objcopy
 CFLAGS := -O0 -g
 CHARDFLAGS := -ffreestanding -fno-stack-protector -fshort-wchar -mno-red-zone -Istage1/uefi -Icommon -Iexternal/gnu-efi/inc -Iexternal/gnu-efi/inc/x86_64 -Iexternal/gnu-efi/inc/protocol
 LDFLAGS :=
-LDHARDFLAGS := /subsystem:efi_application /nodefaultlib /dll /entry:efi_main
+LDHARDFLAGS := /debug:full /subsystem:efi_application /nodefaultlib /dll /entry:efi_main
 ASFLAGS :=
 
 COMMON_SRC := $(wildcard common/*.c common/*/*.c)
@@ -20,7 +20,7 @@ STAGE1_OBJ += $(patsubst stage1/uefi/%, build/stage1/uefi/%.obj, $(STAGE1_OBJ:%.
 all: $(shell mkdir -p build/stage1/uefi build/common/uefi) build/xeptoboot.efi
 
 build/xeptoboot.efi: $(COMMON_OBJ) $(STAGE1_OBJ)
-	$(LD) $(LDFLAGS) $(LDHARDFLAGS) $^ /out:$@
+	$(LD) $(LDFLAGS) $(LDHARDFLAGS) $^ /out:$@ /pdb:$(@:.efi=.pdb)
 
 build/stage1/uefi/%.s.obj: stage1/uefi/%.s
 	$(AS) $< $(ASFLAGS) -f win64 -o $@
@@ -36,7 +36,11 @@ run: build/xeptoboot.efi
 	clang -target x86_64-elf $(CFLAGS) $(CHARDFLAGS) -c kernel-example/main.c -o build/efi-root/kernel.o
 	ld.lld -Tkernel-example/linker.ld -nostdlib build/efi-root/kernel.o -o build/efi-root/kernel.elf
 	cp $< build/efi-root/EFI/BOOT/BOOTX64.EFI
-	qemu-system-x86_64 -m 2G -boot c -hda fat:rw:build/efi-root -pflash external/ovmf-prebuilt/bin/DEBUGX64_OVMF.fd -debugcon stdio
+	qemu-system-x86_64 -m 2G -boot d \
+		-hda fat:rw:build/efi-root \
+		-drive if=pflash,format=raw,readonly=on,file=external/ovmf-prebuilt/bin/DEBUGX64_OVMF_CODE.fd \
+		-drive if=pflash,format=raw,file=external/ovmf-prebuilt/bin/DEBUGX64_OVMF_VARS.fd \
+		-net none -debugcon stdio
 
 clean:
 	$(RM)r build/stage1/uefi build/common/uefi
