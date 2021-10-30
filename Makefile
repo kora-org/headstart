@@ -36,7 +36,7 @@ build/xeptoboot.bin: build/stage0.bin build/stage1.bin
 	cat $^ > $@
 
 run: build/xeptoboot.bin
-	qemu-system-i386 -fda $< -debugcon stdio
+	qemu-system-i386 -hda $< -debugcon stdio -no-reboot
 
 clean:
 	$(RM)r build

@@ -12,7 +12,7 @@ disk_load:
     jc floppy_error
 
     mov ah, 41h
-    mov bx, 0x55aa
+    mov bx, 55aah
     int 13h
     jc disk_error
 

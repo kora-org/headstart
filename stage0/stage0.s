@@ -10,7 +10,7 @@ ReservedForBoot   dw 1
 NumberOfFats      db 2
 RootDirEntries    dw 224
 LogicalSectors    dw 2880
-MediumByte        db 0xF0
+MediumByte        db 0xf0
 SectorsPerFat     dw 9
 SectorsPerTrack   dw 18
 Sides             dw 2
@@ -22,12 +22,12 @@ VolumeID          dd 00000000h
 VolumeLabel       db "XeptoBoot01"
 FileSystem        db "FAT12   "
 
-STAGE1_OFFSET equ 0x7e00
+STAGE1_OFFSET equ 7e00h
 
 load_stage0:
     mov [BOOT_DRIVE], dl
 
-    mov bp, 0x7c00
+    mov bp, 7c00h
     mov sp, bp
 
     call load_stage1
@@ -48,13 +48,13 @@ load_stage1:
     ret
 
 print:
-	mov ah, 0x0e
+	mov ah, 0eh
 
 .print_loop:
 	lodsb
 	test al, al
 	jz .end
-	int 0x10
+	int 10h
 	jmp .print_loop
 
 .end:

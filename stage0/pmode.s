@@ -16,7 +16,7 @@ init_32bit:
     mov fs, ax
     mov gs, ax
 
-    mov ebp, 0x7e00
+    mov ebp, 7e00h
     mov esp, ebp
 
     call start_stage1
