@@ -19,6 +19,7 @@ disk_load:
     pop dx
     cmp al, dh
     jne sectors_error
+
     popa
     ret
 

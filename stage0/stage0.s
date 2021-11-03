@@ -1,30 +1,16 @@
 [bits 16]
 [org 0x7c00]
-jmp short load_stage0
-nop
-
-OEMLabel          db "XEPTBOOT"
-BytesPerSector    dw 512
-SectorsPerCluster db 1
-ReservedForBoot   dw 1
-NumberOfFats      db 2
-RootDirEntries    dw 224
-LogicalSectors    dw 2880
-MediumByte        db 0xf0
-SectorsPerFat     dw 9
-SectorsPerTrack   dw 18
-Sides             dw 2
-HiddenSectors     dd 0
-LargeSectors      dd 0
-DriveNo           dw 0
-Signature         db 41
-VolumeID          dd 00000000h
-VolumeLabel       db "XeptoBoot01"
-FileSystem        db "FAT12   "
 
 STAGE1_OFFSET equ 7e00h
+_start:
+    jmp short load_stage0
+    nop
+
+    times 87 db 0x00
 
 load_stage0:
+    mov si, .msg
+    call print_e9
     mov [BOOT_DRIVE], dl
 
     mov bp, 7c00h
@@ -34,6 +20,8 @@ load_stage0:
     call enter_pmode
 
     jmp $
+
+.msg: db "[stage0] XeptoBoot 0.1\n[stage0] Starting up...", 0
 
 %include "disk.s"
 %include "gdt.s"
@@ -59,6 +47,19 @@ print:
 
 .end:
 	ret
+
+print_e9:
+    mov ah, 0eh
+
+.print_loop:
+    lodsb
+    test al, al
+    jz .end
+    out 0xe9, al
+    jmp .print_loop
+
+.end:
+    ret
 
 [bits 32]
 start_stage1:

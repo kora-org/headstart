@@ -1,4 +1,4 @@
-CC := clang -target i386-elf
+CC := clang -target i686-pc-elf
 LD := ld.lld
 AS := nasm
 
