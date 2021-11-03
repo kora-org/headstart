@@ -10,7 +10,8 @@ _start:
 
 load_stage0:
     mov si, .msg
-    call print_e9
+    call print
+
     mov [BOOT_DRIVE], dl
 
     mov bp, 7c00h
@@ -21,7 +22,7 @@ load_stage0:
 
     jmp $
 
-.msg: db "[stage0] XeptoBoot 0.1\n[stage0] Starting up...", 0
+.msg: db `\r\nXeptoBoot 0.1\r\nCopyright 2020 Leap of Azzam\r\n`, 0
 
 %include "disk.s"
 %include "gdt.s"
@@ -42,6 +43,7 @@ print:
 	lodsb
 	test al, al
 	jz .end
+	out 0xe9, al
 	int 10h
 	jmp .print_loop
 
