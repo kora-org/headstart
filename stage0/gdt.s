@@ -1,7 +1,8 @@
 gdt_start:
-    dq 0
+    dd 0
+    dd 0
 
-gdt_code:
+gdt_code: 
     dw 0xffff
     dw 0
     db 0
@@ -18,7 +19,6 @@ gdt_data:
     db 0
 
 gdt_end:
-    ; end
 
 gdt_descriptor:
     dw gdt_end - gdt_start - 1

@@ -2,11 +2,11 @@ CC := clang -target i686-pc-elf
 LD := ld.lld
 AS := nasm
 
-CFLAGS := -O0 -g
+CFLAGS := -Wall -Wextra
 CHARDFLAGS := -nostdlib -ffreestanding -fno-stack-protector -Istage1 -Icommon
 LDFLAGS :=
-LDHARDFLAGS := -T linker.ld --oformat binary
-ASFLAGS := -F dwarf
+LDHARDFLAGS := -Ttext 0x1000 --oformat binary
+ASFLAGS := -W+all
 
 COMMON_SRC := $(wildcard common/*.c common/*/*.c)
 COMMON_OBJ := $(patsubst common/%, build/common/%.o, $(COMMON_SRC:%.c=%))
@@ -29,7 +29,7 @@ build/stage1/%.o: stage1/%.c
 build/common/%.o: common/%.c
 	$(CC) $(CFLAGS) $(CHARDFLAGS) -c $< -o $@
 
-build/stage0.bin: stage0/stage0.s
+build/stage0.bin: stage0/bootsect.s
 	$(AS) $< -Istage0 -f bin -o $@
 
 build/xeptoboot.bin: build/stage0.bin build/stage1.bin
