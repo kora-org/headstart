@@ -1,6 +1,14 @@
+[bits 16]
 [org 0x7c00]
+jmp short boot_stage0
+nop
+
+; stub for older BIOSes that requires disk information to start the bootsector
+times 87 db 0x00
+
 STAGE1_OFFSET equ 0x1000
 
+boot_stage0:
     mov [BOOT_DRIVE], dl
     mov bp, 0x9000
     mov sp, bp
@@ -17,8 +25,8 @@ STAGE1_OFFSET equ 0x1000
 
 [bits 16]
 load_stage1:
-    mov bx, STAGE1_OFFSET ; Read from disk and store in 0x1000
-    mov dh, 16 ; Our future kernel will be larger, make this big
+    mov bx, STAGE1_OFFSET
+    mov dh, 16
     mov dl, [BOOT_DRIVE]
     call disk_load
     ret

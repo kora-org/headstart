@@ -21,7 +21,7 @@ build/stage1.bin: $(COMMON_OBJ) $(STAGE1_OBJ)
 	$(LD) $(LDFLAGS) $(LDHARDFLAGS) $^ -o $@
 
 build/stage1/%.s.o: stage1/%.s
-	$(AS) $< $(ASFLAGS) -f elf32 -o $@
+	$(AS) $< $(ASFLAGS) -f elf -o $@
 
 build/stage1/%.o: stage1/%.c
 	$(CC) $(CFLAGS) $(CHARDFLAGS) -c $< -o $@
