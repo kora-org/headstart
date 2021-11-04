@@ -1,7 +1,7 @@
 #include "io.h"
 #include "vga.h"
 
-void _start(void) {
+void stage1_entry(void) {
     outb(0xe9, 't');
     vga_initialize();
     vga_writestring("Hello Bootloader World!");

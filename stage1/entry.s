@@ -1,4 +1,6 @@
 [bits 32]
-[extern _start]
-call _start
-jmp $
+[global _start]
+[extern stage1_entry]
+_start:
+    call stage1_entry
+    jmp $
