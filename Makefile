@@ -2,7 +2,7 @@ CC := clang -target i686-pc-elf
 LD := ld.lld
 AS := nasm
 
-CFLAGS := -Wall -Wextra
+CFLAGS := -nostdlib -O0 -g -Wall -Wextra
 CHARDFLAGS := -nostdlib -ffreestanding -fno-stack-protector -Istage1 -Icommon
 LDFLAGS :=
 LDHARDFLAGS := -Ttext 0x1000 --oformat binary

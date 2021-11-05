@@ -1,4 +1,5 @@
 disk_load:
+    cli
     pusha
     push dx
 
@@ -6,7 +7,7 @@ disk_load:
     mov al, dh
     mov cl, 0x02
     mov ch, 0x00
-    mov dh, 0x80
+    mov dh, 0x00
 
     cmp dl, 0x80
     jc floppy_detected_error
@@ -25,25 +26,31 @@ disk_load:
     ret
 
 floppy_detected_error:
-    mov bx, FLOPPY_DETECTED_ERROR
+    mov bx, FLOPPY_DETECTED_ERROR_MSG
     call print
+    mov dh, ah
+    call print_hex
     jmp disk_loop
 
 disk_error:
-    mov bx, DISK_ERROR
+    mov bx, DISK_ERROR_MSG
     call print
     mov dh, ah
     call print_hex
     jmp disk_loop
 
 sectors_error:
-    mov bx, SECTORS_ERROR
+    mov bx, SECTORS_ERROR_MSG
     call print
+    mov dh, ah
+    call print_hex
     jmp disk_loop
 
 disk_loop:
-    jmp $
+    cli
+    .halt: hlt
+    jmp .halt
 
-FLOPPY_DETECTED_ERROR: db "[panic] XeptoBoot isn't designed for floppy disks. Aborting.", 0
-DISK_ERROR: db "[panic] Disk read error. Code: ", 0
-SECTORS_ERROR: db "[panic] Incorrect number of sectors read.", 0
+FLOPPY_DETECTED_ERROR_MSG: db "[panic] Floppy disks isn't supported. Error code: ", 0
+DISK_ERROR_MSG: db "[panic] Disk read error. Error code: ", 0
+SECTORS_ERROR_MSG: db "[panic] Incorrect number of sectors read. Error code: ", 0

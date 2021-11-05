@@ -48,7 +48,7 @@ EFI_STATUS load_elf(CHAR16 *path) {
         EFI_FILE_INFO *file_info;
         EFI_GUID file_info_guid = EFI_FILE_INFO_ID;
         kernel->GetInfo(kernel, &file_info_guid, &file_info_size, NULL);
-        BS->AllocatePool(EfiLoaderData, file_info_size, (void **)&file_info);
+        BS->AllocatePool(EfiBootServicesData, file_info_size, (void **)&file_info);
         kernel->GetInfo(kernel, &file_info_guid, &file_info_size, (void **)&file_info);
         UINTN size = sizeof(header);
         kernel->Read(kernel, &size, &header);
@@ -68,7 +68,7 @@ EFI_STATUS load_elf(CHAR16 *path) {
     {
         kernel->SetPosition(kernel, header.e_phoff);
         UINTN size = header.e_phnum * header.e_phentsize;
-        BS->AllocatePool(EfiLoaderData, size, (void **)&phdrs);
+        BS->AllocatePool(EfiBootServicesData, size, (void **)&phdrs);
         kernel->Read(kernel, &size, phdrs);
     }
 
@@ -79,7 +79,7 @@ EFI_STATUS load_elf(CHAR16 *path) {
             case PT_LOAD: {
                 int pages = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
                 Elf64_Addr segment = phdr->p_paddr;
-                BS->AllocatePages(AllocateAddress, EfiLoaderData, pages, &segment);
+                BS->AllocatePages(AllocateAddress, EfiBootServicesData, pages, &segment);
 
                 kernel->SetPosition(kernel, phdr->p_offset);
                 UINTN size = phdr->p_filesz;
@@ -95,7 +95,7 @@ EFI_STATUS load_elf(CHAR16 *path) {
     UINT32 descriptor_version;
     {
         BS->GetMemoryMap(&map_size, map, &map_key, &descriptor_size, &descriptor_version);
-        BS->AllocatePool(EfiLoaderData, map_size, (void **)&map);
+        BS->AllocatePool(EfiBootServicesData, map_size, (void **)&map);
         BS->GetMemoryMap(&map_size, map, &map_key, &descriptor_size, &descriptor_version);
     }
 
@@ -103,7 +103,7 @@ EFI_STATUS load_elf(CHAR16 *path) {
     void (*kernel_start)(xeptoboot_hdr *) = ((__attribute__((sysv_abi))void(*)(xeptoboot_hdr *))header.e_entry);
 
     xeptoboot_hdr *xeptoboot;
-    BS->AllocatePool(EfiLoaderData, sizeof(xeptoboot), (void **)&xeptoboot);
+    BS->AllocatePool(EfiBootServicesData, sizeof(xeptoboot), (void **)&xeptoboot);
     xeptoboot->print = xeptoboot_print;
 
     kernel_start(xeptoboot);

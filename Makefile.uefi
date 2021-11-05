@@ -4,7 +4,7 @@ AS := nasm
 AR := llvm-ar
 OBJCOPY := llvm-objcopy
 
-CFLAGS := -O0 -g
+CFLAGS := -nostdlib -O0 -g -Wall -Wextra
 CHARDFLAGS := -ffreestanding -fno-stack-protector -fshort-wchar -mno-red-zone -Istage1/uefi -Icommon -Iexternal/gnu-efi/inc -Iexternal/gnu-efi/inc/x86_64 -Iexternal/gnu-efi/inc/protocol
 LDFLAGS :=
 LDHARDFLAGS := /debug:full /subsystem:efi_application /nodefaultlib /dll /entry:efi_main
@@ -36,10 +36,10 @@ run: build/xeptoboot.efi
 	clang -target x86_64-elf $(CFLAGS) $(CHARDFLAGS) -c kernel-example/main.c -o build/efi-root/kernel.o
 	ld.lld -Tkernel-example/linker.ld -nostdlib build/efi-root/kernel.o -o build/efi-root/kernel.elf
 	cp $< build/efi-root/EFI/BOOT/BOOTX64.EFI
-	qemu-system-x86_64 -m 2G -boot d \
+	qemu-system-x86_64 -m 2G \
 		-hda fat:rw:build/efi-root \
-		-drive if=pflash,format=raw,readonly=on,file=external/ovmf-prebuilt/bin/DEBUGX64_OVMF_CODE.fd \
-		-drive if=pflash,format=raw,file=external/ovmf-prebuilt/bin/DEBUGX64_OVMF_VARS.fd \
+		-pflash external/ovmf-prebuilt/bin/DEBUGX64_OVMF_CODE.fd \
+		-pflash external/ovmf-prebuilt/bin/DEBUGX64_OVMF_VARS.fd \
 		-net none -debugcon stdio
 
 clean:
