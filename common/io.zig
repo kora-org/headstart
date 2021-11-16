@@ -6,7 +6,7 @@ pub fn outb(port: u16, data: u8) void {
     );
 }
 
-fn outw(port: u16, data: u16) void {
+pub fn outw(port: u16, data: u16) void {
     asm volatile ("outw %[data], %[port]"
         :
         : [port] "{dx}" (port),
@@ -14,7 +14,7 @@ fn outw(port: u16, data: u16) void {
     );
 }
 
-fn outl(port: u16, data: u32) void {
+pub fn outl(port: u16, data: u32) void {
     asm volatile ("outl %[data], %[port]"
         :
         : [port] "{dx}" (port),
@@ -29,14 +29,14 @@ pub fn inb(port: u16) u8 {
     );
 }
 
-fn inw(port: u16) u16 {
+pub fn inw(port: u16) u16 {
     return asm volatile ("inw  %[port], %[ret]"
         : [ret] "={ax}" (-> u16)
         : [port] "{dx}" (port)
     );
 }
 
-fn inl(port: u16) u32 {
+pub fn inl(port: u16) u32 {
     return asm volatile ("inl  %[port], %[ret]"
         : [ret] "={eax}" (-> u32)
         : [port] "{dx}" (port)
