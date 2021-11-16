@@ -53,6 +53,7 @@ fn build_uefi(b: *Builder) *std.build.LibExeObjStep {
     uefi.setMainPkgPath(".");
     uefi.addPackagePath("io", "common/io.zig");
     uefi.addPackagePath("console", "stage1/uefi/console.zig");
+    uefi.addPackagePath("graphics", "stage1/uefi/graphics.zig");
     uefi.setOutputDir(out_path);
     uefi.setTarget(CrossTarget{
         .cpu_arch = Target.Cpu.Arch.x86_64,
