@@ -68,7 +68,7 @@ pub fn puts(data: []const u8) void {
         putChar(data[i]);
 }
 
-pub fn printf(comptime format: []const u8, args: var) void {
+pub fn printf(comptime format: []const u8, args: ...) void {
     var buf: [100]u8 = undefined;
     puts(fmt.bufPrint(buf, format, args) catch unreachable);
 }
