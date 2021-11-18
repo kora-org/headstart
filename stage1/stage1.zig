@@ -7,9 +7,7 @@ const uefi = @import("std").os.uefi;
 pub var system_table: *uefi.tables.SystemTable = undefined;
 pub var boot_services: *uefi.tables.BootServices = undefined;
 
-pub export fn stage1_entry(_system_table: *uefi.tables.SystemTable, _boot_services: *uefi.tables.BootServices) void {
-    system_table = _system_table;
-    boot_services = _boot_services;
+pub export fn entry() callconv(.C) void {
     io.outb(0xe9, 't');
     graphics.initialize();
     console.initialize();

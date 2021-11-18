@@ -1,29 +1,32 @@
 const fmt = @import("std").fmt;
+const mem = @import("std").mem;
 
-const VGA_WIDTH: usize = 80;
-const VGA_HEIGHT: usize = 25;
+const VGA_WIDTH = 80;
+const VGA_HEIGHT = 25;
+const VGA_SIZE = VGA_WIDTH * VGA_HEIGHT;
+
 const ConsoleColors = enum(u8) {
-    black = 0,
-    blue = 1,
-    green = 2,
-    cyan = 3,
-    red = 4,
-    magenta = 5,
-    brown = 6,
-    light_grey = 7,
-    dark_grey = 8,
-    light_blue = 9,
-    light_green = 10,
-    light_cyan = 11,
-    light_red = 12,
-    light_magenta = 13,
-    light_brown = 14,
-    white = 15,
+    Black = 0,
+    Blue = 1,
+    Green = 2,
+    Cyan = 3,
+    Red = 4,
+    Magenta = 5,
+    Brown = 6,
+    LightGray = 7,
+    DarkGray = 8,
+    LightBlue = 9,
+    LightGreen = 10,
+    LightCyan = 11,
+    LightRed = 12,
+    LightMagenta = 13,
+    LightBrown = 14,
+    White = 15
 };
 
 var row: usize = 0;
 var column: usize = 0;
-var color = vgaEntryColor(ConsoleColors.light_grey, ConsoleColors.black);
+var color = vgaEntryColor(ConsoleColors.LightGray, ConsoleColors.Black);
 var buffer = @intToPtr([*]volatile u16, 0xB8000);
 
 fn vgaEntryColor(fg: ConsoleColors, bg: ConsoleColors) u8 {
@@ -36,17 +39,15 @@ fn vgaEntry(uc: u8, new_color: u8) u16 {
 }
 
 pub fn initialize() void {
-    var y: usize = 0;
-    while (y < VGA_HEIGHT) : (y += 1) {
-        var x: usize = 0;
-        while (x < VGA_WIDTH) : (x += 1) {
-            putCharAt(' ', color, x, y);
-        }
-    }
+    clear();
 }
 
 pub fn setColor(fg: ConsoleColors, bg: ConsoleColors) void {
     color = vgaEntryColor(fg, bg);
+}
+
+pub fn clear() void {
+    mem.set(u16, buffer[0..VGA_SIZE], vgaEntry(' ', color));
 }
 
 pub fn putCharAt(c: u8, new_color: u8, x: usize, y: usize) void {

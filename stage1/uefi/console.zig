@@ -3,23 +3,23 @@ const fmt = @import("std").fmt;
 
 pub var con_out: *uefi.protocols.SimpleTextOutputProtocol = undefined;
 
-const ConsoleColors = enum(u8) {
-    black = con_out.black,
-    blue = con_out.blue,
-    green = con_out.green,
-    cyan = con_out.cyan,
-    red = con_out.red,
-    magenta = con_out.magenta,
-    brown = con_out.brown,
-    light_grey = con_out.lightgray,
-    dark_grey = con_out.darkgray,
-    light_blue = con_out.lightblue,
-    light_green = con_out.lightgreen,
-    light_cyan = con_out.lightcyan,
-    light_red = con_out.lightred,
-    light_magenta = con_out.lightmagenta,
-    light_brown = con_out.yellow,
-    white = con_out.white,
+const ConsoleColors = enum(u4) {
+    Black = con_out.black,
+    Blue = con_out.blue,
+    Green = con_out.green,
+    Cyan = con_out.cyan,
+    Red = con_out.red,
+    Magenta = con_out.magenta,
+    Brown = con_out.brown,
+    LightGray = con_out.lightgray,
+    DarkGray = con_out.darkgray,
+    LightBlue = con_out.lightblue,
+    LightGreen = con_out.lightgreen,
+    LightCyan = con_out.lightcyan,
+    LightRed = con_out.lightred,
+    LightMagenta = con_out.lightmagenta,
+    LightBrown = con_out.yellow,
+    White = con_out.white
 };
 
 var total_row: usize = undefined;
@@ -28,6 +28,7 @@ var total_column: usize = undefined;
 pub fn initialize() void {
     _ = con_out.reset(false);
     _ = con_out.queryMode(undefined, &total_column, &total_row);
+    clear();
 }
 
 pub fn setColor(fg: ConsoleColors, bg: ConsoleColors) void {
@@ -35,6 +36,10 @@ pub fn setColor(fg: ConsoleColors, bg: ConsoleColors) void {
         con_out.setAttribute(@enumToInt(fg));
     if (bg != undefined)
         con_out.setAttribute(@enumToInt(bg));
+}
+
+pub fn clear() void {
+    _ = con_out.clearScreen();
 }
 
 pub fn putCharAt(c: u8, x_: usize, y_: usize) void {

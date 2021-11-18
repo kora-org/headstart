@@ -1,8 +1,11 @@
+.section .text
 .global _start
-.extern stage1_entry
+.extern entry
+
 _start:
-    call stage1_entry
+    call entry
     jmp .loop
+
 .loop:
     hlt
     jmp .loop

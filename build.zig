@@ -19,6 +19,7 @@ fn build_bios(b: *Builder) *std.build.RunStep {
     });
     bios.setBuildMode(b.standardReleaseOptions());
     bios.setLinkerScriptPath(.{ .path = "stage1/bios/linker.ld" });
+    bios.install();
 
     const bin = b.addInstallRaw(bios, "stage1.bin");
 
@@ -77,7 +78,8 @@ fn run_qemu_bios(b: *Builder, path: []const u8) *std.build.RunStep {
         "-debugcon", "stdio",
         "-vga", "virtio",
         "-m", "4G",
-        "-machine", "q35,accel=kvm:whpx:tcg",
+        // This prevents the BIOS to boot the bootsector
+        // "-machine", "q35,accel=kvm:whpx:tcg",
         "-no-reboot", "-no-shutdown"
         // zig fmt: on
     };
@@ -125,7 +127,7 @@ pub fn build(b: *Builder) void {
     const bios = build_bios(b);
     const uefi = build_uefi(b);
 
-    const bios_step = run_qemu_bios(b, out_path);
+    const bios_step = run_qemu_bios(b, bios_path);
     bios_step.step.dependOn(&bios.step);
 
     const uefi_step = run_qemu_uefi(b, b.install_path);
