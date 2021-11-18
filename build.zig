@@ -10,6 +10,7 @@ fn build_bios(b: *Builder) *std.build.RunStep {
     bios.setMainPkgPath(".");
     bios.addPackagePath("io", "common/io.zig");
     bios.addPackagePath("console", "stage1/bios/console.zig");
+    bios.addPackagePath("graphics", "stage1/bios/graphics.zig");
     bios.addAssemblyFile("stage1/bios/entry.s");
     bios.setTarget(CrossTarget{
         .cpu_arch = Target.Cpu.Arch.i386,
@@ -119,8 +120,7 @@ fn run_qemu_uefi(b: *Builder, dir: []const u8) *std.build.RunStep {
 }
 
 pub fn build(b: *Builder) void {
-    const out_dir = std.mem.concat(b.allocator, u8, &[_][]const u8{ b.install_path, "/bin" }) catch unreachable;
-    const out_path = std.mem.concat(b.allocator, u8, &[_][]const u8{ out_dir, "/xeptoboot.bin" }) catch unreachable;
+    const bios_path = std.mem.concat(b.allocator, u8, &[_][]const u8{ b.install_path, "/bin/xeptoboot.bin" }) catch unreachable;
 
     const bios = build_bios(b);
     const uefi = build_uefi(b);

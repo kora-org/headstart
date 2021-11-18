@@ -70,5 +70,5 @@ pub fn puts(data: []const u8) void {
 
 pub fn printf(comptime format: []const u8, args: anytype) void {
     var buf: [100]u8 = undefined;
-    puts(fmt.bufPrint(buf, format, args) catch unreachable);
+    puts(fmt.bufPrint(&buf, format, args) catch unreachable);
 }

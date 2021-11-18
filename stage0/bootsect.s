@@ -10,7 +10,7 @@ STAGE1_OFFSET equ 0x1000
 
 boot_stage0:
     mov [BOOT_DRIVE], dl
-    mov bp, 0x9000
+    mov bp, 0x8000
     mov sp, bp
 
     call load_stage1
