@@ -1,22 +1,27 @@
 [bits 16]
 [org 0x7c00]
-jmp short boot_stage0
-nop
-
-; stub for older BIOSes that requires disk information to start the bootsector
-times 87 db 0x00
 
 STAGE1_OFFSET equ 0x1000
 
 boot_stage0:
     mov [BOOT_DRIVE], dl
-    mov bp, 0x8000
-    mov sp, bp
+    mov ax, cs
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov sp, 0x8000
 
+    call check_a20
+    cmp ax, 0
+    jne .a20_success
+    call enable_a20
     call load_stage1
     call switch_to_pm
     jmp $
 
+.a20_success:
+
+%include "a20.s"
 %include "print.s"
 %include "print_hex.s"
 %include "disk.s"

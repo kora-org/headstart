@@ -2,16 +2,18 @@ const std = @import("std");
 const Builder = @import("std").build.Builder;
 const Target = @import("std").Target;
 const CrossTarget = @import("std").zig.CrossTarget;
+const pkgs = @import("deps.zig").pkgs;
 
 fn build_bios(b: *Builder) *std.build.RunStep {
     const out_path = std.mem.concat(b.allocator, u8, &[_][]const u8{ b.install_path, "/bin" }) catch unreachable;
 
     const bios = b.addExecutable("stage1.elf", "stage1/stage1.zig");
     bios.setMainPkgPath(".");
-    bios.addPackagePath("io", "common/io.zig");
+    bios.addPackagePath("io", "lib/io.zig");
     bios.addPackagePath("console", "stage1/bios/console.zig");
     bios.addPackagePath("graphics", "stage1/bios/graphics.zig");
     bios.addAssemblyFile("stage1/bios/entry.s");
+    bios.setOutputDir(out_path);
     bios.setTarget(CrossTarget{
         .cpu_arch = Target.Cpu.Arch.i386,
         .os_tag = Target.Os.Tag.freestanding,
@@ -19,12 +21,13 @@ fn build_bios(b: *Builder) *std.build.RunStep {
     });
     bios.setBuildMode(b.standardReleaseOptions());
     bios.setLinkerScriptPath(.{ .path = "stage1/bios/linker.ld" });
+    pkgs.addAllTo(bios);
     bios.install();
 
     const bin = b.addInstallRaw(bios, "stage1.bin");
 
     const bootsector = b.addSystemCommand(&[_][]const u8{
-        "nasm", "-fbin", "stage0/bootsect.s", "-Istage0",
+        "nasm", "-Ox", "-w+all", "-fbin", "stage0/bootsect.s", "-Istage0",
         std.mem.concat(b.allocator, u8, &[_][]const u8{
             "-o", out_path, "/stage0.bin"
         }) catch unreachable
@@ -53,7 +56,7 @@ fn build_uefi(b: *Builder) *std.build.LibExeObjStep {
 
     const uefi = b.addExecutable("xeptoboot", "stage1/uefi/entry.zig");
     uefi.setMainPkgPath(".");
-    uefi.addPackagePath("io", "common/io.zig");
+    uefi.addPackagePath("io", "lib/io.zig");
     uefi.addPackagePath("console", "stage1/uefi/console.zig");
     uefi.addPackagePath("graphics", "stage1/uefi/graphics.zig");
     uefi.setOutputDir(out_path);
@@ -63,6 +66,8 @@ fn build_uefi(b: *Builder) *std.build.LibExeObjStep {
         .abi = Target.Abi.msvc
     });
     uefi.setBuildMode(b.standardReleaseOptions());
+    pkgs.addAllTo(uefi);
+    uefi.install();
 
     const uefi_step = b.step("uefi", "Build the UEFI version");
     uefi_step.dependOn(&uefi.step);
@@ -80,6 +85,7 @@ fn run_qemu_bios(b: *Builder, path: []const u8) *std.build.RunStep {
         "-m", "4G",
         // This prevents the BIOS to boot the bootsector
         // "-machine", "q35,accel=kvm:whpx:tcg",
+        "-machine", "accel=kvm:whpx:tcg",
         "-no-reboot", "-no-shutdown"
         // zig fmt: on
     };

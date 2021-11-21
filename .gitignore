@@ -1,4 +1,7 @@
 zig-cache/
+deps.zig
+.gyro
+gyro.lock
 zig-out/
 
 *.d
