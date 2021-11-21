@@ -1,5 +1,5 @@
 pkgs:
-  zCord:
+  xeptoboot:
     version: 0.0.0
     description: A small 2-staged bootloader written in Zig
     license: ISC
