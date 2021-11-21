@@ -5,21 +5,15 @@ STAGE1_OFFSET equ 0x1000
 
 boot_stage0:
     mov [BOOT_DRIVE], dl
-    mov ax, cs
-    mov ds, ax
-    mov es, ax
-    mov ss, ax
     mov sp, 0x8000
 
     call check_a20
-    cmp ax, 0
-    jne .a20_success
-    call enable_a20
+    cmp ax, 1
+    jne enable_a20
+
     call load_stage1
     call switch_to_pm
     jmp $
-
-.a20_success:
 
 %include "a20.s"
 %include "print.s"
