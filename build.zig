@@ -12,13 +12,30 @@ fn build_bios(b: *Builder) *std.build.RunStep {
     bios.addPackagePath("io", "lib/io.zig");
     bios.addPackagePath("console", "stage1/bios/console.zig");
     bios.addPackagePath("graphics", "stage1/bios/graphics.zig");
+    bios.addPackagePath("filesystem", "stage1/bios/filesystem.zig");
     bios.addAssemblyFile("stage1/bios/entry.s");
     bios.setOutputDir(out_path);
+
+    const features = std.Target.x86.Feature;
+    var disabled_features = std.Target.Cpu.Feature.Set.empty;
+    var enabled_features = std.Target.Cpu.Feature.Set.empty;
+    disabled_features.addFeature(@enumToInt(features.mmx));
+    disabled_features.addFeature(@enumToInt(features.sse));
+    disabled_features.addFeature(@enumToInt(features.sse2));
+    disabled_features.addFeature(@enumToInt(features.avx));
+    disabled_features.addFeature(@enumToInt(features.avx2));
+
+    enabled_features.addFeature(@enumToInt(features.soft_float));
+    bios.code_model = .kernel;
+
     bios.setTarget(CrossTarget{
         .cpu_arch = Target.Cpu.Arch.i386,
         .os_tag = Target.Os.Tag.freestanding,
-        .abi = Target.Abi.none
+        .abi = Target.Abi.none,
+        .cpu_features_sub = disabled_features,
+        .cpu_features_add = enabled_features
     });
+
     bios.setBuildMode(b.standardReleaseOptions());
     bios.setLinkerScriptPath(.{ .path = "stage1/bios/linker.ld" });
     pkgs.addAllTo(bios);
@@ -59,12 +76,29 @@ fn build_uefi(b: *Builder) *std.build.LibExeObjStep {
     uefi.addPackagePath("io", "lib/io.zig");
     uefi.addPackagePath("console", "stage1/uefi/console.zig");
     uefi.addPackagePath("graphics", "stage1/uefi/graphics.zig");
+    uefi.addPackagePath("filesystem", "stage1/uefi/filesystem.zig");
     uefi.setOutputDir(out_path);
+
+    const features = std.Target.x86.Feature;
+    var disabled_features = std.Target.Cpu.Feature.Set.empty;
+    var enabled_features = std.Target.Cpu.Feature.Set.empty;
+    disabled_features.addFeature(@enumToInt(features.mmx));
+    disabled_features.addFeature(@enumToInt(features.sse));
+    disabled_features.addFeature(@enumToInt(features.sse2));
+    disabled_features.addFeature(@enumToInt(features.avx));
+    disabled_features.addFeature(@enumToInt(features.avx2));
+
+    enabled_features.addFeature(@enumToInt(features.soft_float));
+    uefi.code_model = .kernel;
+
     uefi.setTarget(CrossTarget{
         .cpu_arch = Target.Cpu.Arch.x86_64,
         .os_tag = Target.Os.Tag.uefi,
-        .abi = Target.Abi.msvc
+        .abi = Target.Abi.msvc,
+        .cpu_features_sub = disabled_features,
+        .cpu_features_add = enabled_features
     });
+
     uefi.setBuildMode(b.standardReleaseOptions());
     pkgs.addAllTo(uefi);
     uefi.install();
@@ -104,7 +138,8 @@ fn run_qemu_uefi(b: *Builder, dir: []const u8) *std.build.RunStep {
         "/bin/sh", "-c",
         std.mem.concat(b.allocator, u8, &[_][]const u8{
             "mkdir -p ", dir, "/efi-root/EFI/BOOT && ",
-            "cp ", dir, "/bin/xeptoboot.efi ", dir, "/efi-root/EFI/BOOT/BOOTX64.EFI &&",
+            "cp ", dir, "/bin/xeptoboot.efi ", dir, "/efi-root/EFI/BOOT/BOOTX64.EFI && ",
+            "cp ", dir, "/../xeptoboot.zzz.example ", dir, "/efi-root/test.zzz && ",
             "qemu-system-x86_64 ",
             // This doesn't work for some reason
             // "-drive if=none,format=raw,media=disk,file=fat:rw:", dir, "/efi-root ",

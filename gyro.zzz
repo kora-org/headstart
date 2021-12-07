@@ -1,6 +1,6 @@
 pkgs:
   xeptoboot:
-    version: 0.0.0
+    version: 0.0.1
     description: A small 2-staged bootloader written in Zig
     license: ISC
     source_url: "https://github.com/leapofazzam123/xeptoboot"

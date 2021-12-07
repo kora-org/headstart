@@ -3,39 +3,50 @@ const fmt = @import("std").fmt;
 
 pub var con_out: *uefi.protocols.SimpleTextOutputProtocol = undefined;
 
-const ConsoleColors = enum(u4) {
-    Black = con_out.black,
-    Blue = con_out.blue,
-    Green = con_out.green,
-    Cyan = con_out.cyan,
-    Red = con_out.red,
-    Magenta = con_out.magenta,
-    Brown = con_out.brown,
-    LightGray = con_out.lightgray,
-    DarkGray = con_out.darkgray,
-    LightBlue = con_out.lightblue,
-    LightGreen = con_out.lightgreen,
-    LightCyan = con_out.lightcyan,
-    LightRed = con_out.lightred,
-    LightMagenta = con_out.lightmagenta,
-    LightBrown = con_out.yellow,
-    White = con_out.white
+pub const ConsoleColors = enum(u8) {
+    Black = uefi.protocols.SimpleTextOutputProtocol.black,
+    Blue = uefi.protocols.SimpleTextOutputProtocol.blue,
+    Green = uefi.protocols.SimpleTextOutputProtocol.green,
+    Cyan = uefi.protocols.SimpleTextOutputProtocol.cyan,
+    Red = uefi.protocols.SimpleTextOutputProtocol.red,
+    Magenta = uefi.protocols.SimpleTextOutputProtocol.magenta,
+    Brown = uefi.protocols.SimpleTextOutputProtocol.brown,
+    LightGray = uefi.protocols.SimpleTextOutputProtocol.lightgray,
+    DarkGray = uefi.protocols.SimpleTextOutputProtocol.darkgray,
+    LightBlue = uefi.protocols.SimpleTextOutputProtocol.lightblue,
+    LightGreen = uefi.protocols.SimpleTextOutputProtocol.lightgreen,
+    LightCyan = uefi.protocols.SimpleTextOutputProtocol.lightcyan,
+    LightRed = uefi.protocols.SimpleTextOutputProtocol.lightred,
+    LightMagenta = uefi.protocols.SimpleTextOutputProtocol.lightmagenta,
+    LightBrown = uefi.protocols.SimpleTextOutputProtocol.yellow,
+    White = uefi.protocols.SimpleTextOutputProtocol.white
 };
 
-var total_row: usize = undefined;
-var total_column: usize = undefined;
+var row: usize = undefined;
+var column: usize = undefined;
 
 pub fn initialize() void {
     _ = con_out.reset(false);
-    _ = con_out.queryMode(undefined, &total_column, &total_row);
+    _ = con_out.queryMode(undefined, &column, &row);
     clear();
 }
 
-pub fn setColor(fg: ConsoleColors, bg: ConsoleColors) void {
-    if (fg != undefined)
-        con_out.setAttribute(@enumToInt(fg));
-    if (bg != undefined)
-        con_out.setAttribute(@enumToInt(bg));
+pub fn enableCursor() void {
+    _ = con_out.enableCursor(1);
+}
+
+pub fn disableCursor() void {
+    _ = con_out.enableCursor(0);
+}
+
+pub fn setColor(comptime fg: ?ConsoleColors, comptime bg: ?ConsoleColors) void {
+    if (fg) |fg_| {
+        _ = con_out.setAttribute(@enumToInt(fg_));
+    }
+
+    if (bg) |bg_| {
+        _ = con_out.setAttribute(@enumToInt(bg_));
+    }
 }
 
 pub fn clear() void {

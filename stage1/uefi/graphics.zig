@@ -10,6 +10,6 @@ pub fn initialize() void {
         // TODO:: search for compatible mode and set 800x600 if the display is unsupported
         //_ = graphics_output_protocol.?.setMode(2);
     } else {
-        console.puts("[error] unable to configure graphics mode\r\n");
+        console.puts("[error] unable to configure graphics mode\n");
     }
 }

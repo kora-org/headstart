@@ -53,4 +53,4 @@ disk_loop:
 
 FLOPPY_DETECTED_ERROR_MSG: db "[panic] Floppy disks isn't supported. Error code: ", 0
 DISK_ERROR_MSG: db "[panic] Disk read error. Error code: ", 0
-SECTORS_ERROR_MSG: db "[panic] Incorrect number of sectors read. Error code: ", 0
+SECTORS_ERROR_MSG: db "[panic] Sector read error. Error code: ", 0

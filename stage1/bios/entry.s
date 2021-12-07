@@ -4,8 +4,7 @@
 
 _start:
     call entry
-    jmp .loop
 
-.loop:
-    hlt
-    jmp .loop
+    cli
+h:  hlt
+    jmp h
