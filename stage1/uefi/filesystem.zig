@@ -7,7 +7,7 @@ var file_protocol: *uefi.protocols.FileProtocol = undefined;
 var filesystem_protocol: ?*uefi.protocols.SimpleFileSystemProtocol = undefined;
 
 pub fn initialize() void {
-    if (stage1.boot_services.locateProtocol(&uefi.protocols.SimpleFileSystemProtocol.guid, null, @ptrCast(*?*c_void, &filesystem_protocol)) != uefi.Status.Success) {
+    if (stage1.boot_services.locateProtocol(&uefi.protocols.SimpleFileSystemProtocol.guid, null, @ptrCast(*?*anyopaque, &filesystem_protocol)) != uefi.Status.Success) {
         console.puts("[error] couldn't initialize file system\n");
     }
 

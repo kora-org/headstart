@@ -5,7 +5,7 @@ const CrossTarget = @import("std").zig.CrossTarget;
 const pkgs = @import("deps.zig").pkgs;
 
 fn build_bios(b: *Builder) *std.build.RunStep {
-    const out_path = std.mem.concat(b.allocator, u8, &[_][]const u8{ b.install_path, "/bin" }) catch unreachable;
+    const out_path = b.pathJoin(&.{ b.install_path, "/bin" });
 
     const bios = b.addExecutable("stage1.elf", "stage1/stage1.zig");
     bios.setMainPkgPath(".");
@@ -33,7 +33,7 @@ fn build_bios(b: *Builder) *std.build.RunStep {
         .os_tag = Target.Os.Tag.freestanding,
         .abi = Target.Abi.none,
         .cpu_features_sub = disabled_features,
-        .cpu_features_add = enabled_features
+        .cpu_features_add = enabled_features,
     });
 
     bios.setBuildMode(b.standardReleaseOptions());
@@ -41,16 +41,19 @@ fn build_bios(b: *Builder) *std.build.RunStep {
     pkgs.addAllTo(bios);
     bios.install();
 
-    const bin = b.addInstallRaw(bios, "stage1.bin");
+    const bin = b.addInstallRaw(bios, "stage1.bin", .{});
 
+    // zig fmt: off
     const bootsector = b.addSystemCommand(&[_][]const u8{
         "nasm", "-Ox", "-w+all", "-fbin", "stage0/bootsect.s", "-Istage0",
         std.mem.concat(b.allocator, u8, &[_][]const u8{
             "-o", out_path, "/stage0.bin"
         }) catch unreachable
     });
+    // zig fmt: on
     bootsector.step.dependOn(&bin.step);
 
+    // zig fmt: off
     const append = b.addSystemCommand(&[_][]const u8{
         "/bin/sh", "-c",
         std.mem.concat(b.allocator, u8, &[_][]const u8{
@@ -60,6 +63,7 @@ fn build_bios(b: *Builder) *std.build.RunStep {
             ">", out_path, "/xeptoboot.bin"
         }) catch unreachable
     });
+    // zig fmt: on
     append.step.dependOn(&bootsector.step);
 
     const bios_step = b.step("bios", "Build the BIOS version");
@@ -69,7 +73,7 @@ fn build_bios(b: *Builder) *std.build.RunStep {
 }
 
 fn build_uefi(b: *Builder) *std.build.LibExeObjStep {
-    const out_path = std.mem.concat(b.allocator, u8, &[_][]const u8{ b.install_path, "/bin" }) catch unreachable;
+    const out_path = b.pathJoin(&.{ b.install_path, "/bin" });
 
     const uefi = b.addExecutable("xeptoboot", "stage1/uefi/entry.zig");
     uefi.setMainPkgPath(".");
@@ -96,7 +100,7 @@ fn build_uefi(b: *Builder) *std.build.LibExeObjStep {
         .os_tag = Target.Os.Tag.uefi,
         .abi = Target.Abi.msvc,
         .cpu_features_sub = disabled_features,
-        .cpu_features_add = enabled_features
+        .cpu_features_add = enabled_features,
     });
 
     uefi.setBuildMode(b.standardReleaseOptions());
@@ -163,7 +167,7 @@ fn run_qemu_uefi(b: *Builder, dir: []const u8) *std.build.RunStep {
 }
 
 pub fn build(b: *Builder) void {
-    const bios_path = std.mem.concat(b.allocator, u8, &[_][]const u8{ b.install_path, "/bin/xeptoboot.bin" }) catch unreachable;
+    const bios_path = b.pathJoin(&.{b.install_path, "/bin/xeptoboot.bin"});
 
     const bios = build_bios(b);
     const uefi = build_uefi(b);
