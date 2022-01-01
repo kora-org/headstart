@@ -7,7 +7,11 @@ var file_protocol: *uefi.protocols.FileProtocol = undefined;
 var filesystem_protocol: ?*uefi.protocols.SimpleFileSystemProtocol = undefined;
 
 pub fn initialize() void {
-    if (stage1.boot_services.locateProtocol(&uefi.protocols.SimpleFileSystemProtocol.guid, null, @ptrCast(*?*anyopaque, &filesystem_protocol)) != uefi.Status.Success) {
+    if (stage1.boot_services.locateProtocol(
+        &uefi.protocols.SimpleFileSystemProtocol.guid,
+        null,
+        @ptrCast(*?*anyopaque, &filesystem_protocol),
+    ) != uefi.Status.Success) {
         console.puts("[error] couldn't initialize file system\n");
     }
 
@@ -16,13 +20,17 @@ pub fn initialize() void {
     }
 }
 
-pub fn readFile(comptime path: []const u8, size: usize) [*]align(8) u8 {
-    _ = size;
+pub fn readFile(comptime path: []const u8, comptime size: usize) []u8 {
     const utf16_path = comptime toUtf16(path);
 
     var file: *uefi.protocols.FileProtocol = undefined;
 
-    if (file_protocol.open(&file, &utf16_path, uefi.protocols.FileProtocol.efi_file_mode_read, uefi.protocols.FileProtocol.efi_file_read_only) != uefi.Status.Success) {
+    if (file_protocol.open(
+        &file,
+        &utf16_path,
+        uefi.protocols.FileProtocol.efi_file_mode_read,
+        uefi.protocols.FileProtocol.efi_file_read_only,
+    ) != uefi.Status.Success) {
         console.printf("[error] couldn't open file {s}", .{path});
     }
 
@@ -31,9 +39,10 @@ pub fn readFile(comptime path: []const u8, size: usize) [*]align(8) u8 {
     _ = file.getPosition(&position);
     _ = file.setPosition(0);
 
-    var buffer: *[*]align(8) u8 = undefined;
-    if (file.read(&position, buffer.*) != uefi.Status.Success) {
+    var buffer: [*]align(8) u8 = undefined;
+    _ = stage1.boot_services.allocatePool(uefi.tables.MemoryType.LoaderData, size, &buffer);
+    if (file.read(&position, buffer) != uefi.Status.Success) {
         console.printf("[error] couldn't read file {s}", .{path});
     }
-    return buffer.*;
+    return buffer[0..size];
 }

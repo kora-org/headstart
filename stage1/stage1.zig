@@ -1,3 +1,4 @@
+const std = @import("std");
 const console = @import("console");
 const graphics = @import("graphics");
 const filesystem = @import("filesystem");
@@ -11,6 +12,7 @@ pub var boot_services: *uefi.tables.BootServices = undefined;
 pub export fn entry() callconv(.C) void {
     graphics.initialize();
     console.initialize();
+    console.disableCursor();
     console.setColor(console.ConsoleColors.Green, null);
     console.puts("Xeptoboot 0.0.1\n\n");
     console.putChar('>');
@@ -28,5 +30,12 @@ pub export fn entry() callconv(.C) void {
     console.printf("{any}", .{content});
     io.outb(0xe9, 'c');
 
-    while (true) asm volatile("hlt");
+    while (true) asm volatile ("hlt");
+}
+
+pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
+    _ = message;
+    console.printf("[panic] {s}", .{message});
+    while (true) asm volatile ("hlt");
+    unreachable;
 }

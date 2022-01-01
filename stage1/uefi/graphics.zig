@@ -5,7 +5,11 @@ const uefi = @import("std").os.uefi;
 pub var graphics_output_protocol: ?*uefi.protocols.GraphicsOutputProtocol = undefined;
 
 pub fn initialize() void {
-    if (stage1.boot_services.locateProtocol(&uefi.protocols.GraphicsOutputProtocol.guid, null, @ptrCast(*?*anyopaque, &graphics_output_protocol)) == uefi.Status.Success) {
+    if (stage1.boot_services.locateProtocol(
+        &uefi.protocols.GraphicsOutputProtocol.guid,
+        null,
+        @ptrCast(*?*anyopaque, &graphics_output_protocol),
+    ) == uefi.Status.Success) {
         _ = console.con_out.reset(false);
         // TODO:: search for compatible mode and set 800x600 if the display is unsupported
         //_ = graphics_output_protocol.?.setMode(2);

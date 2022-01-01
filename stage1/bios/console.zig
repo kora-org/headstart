@@ -6,7 +6,7 @@ const VGA_WIDTH = 80;
 const VGA_HEIGHT = 25;
 const VGA_SIZE = VGA_WIDTH * VGA_HEIGHT;
 
-pub const ConsoleColors = enum(u8) {
+pub const ConsoleColors = enum(u4) {
     Black = 0,
     Blue = 1,
     Green = 2,
@@ -22,7 +22,7 @@ pub const ConsoleColors = enum(u8) {
     LightRed = 12,
     LightMagenta = 13,
     LightBrown = 14,
-    White = 15
+    White = 15,
 };
 
 var row: usize = 0;
@@ -30,7 +30,7 @@ var column: usize = 0;
 var color = vgaEntryColor(ConsoleColors.LightGray, ConsoleColors.Black);
 var buffer = @intToPtr([*]volatile u16, 0xB8000);
 
-fn vgaEntryColor(fg: ?ConsoleColors, bg: ?ConsoleColors) u8 {
+pub fn vgaEntryColor(fg: ?ConsoleColors, bg: ?ConsoleColors) u8 {
     var fg_: ConsoleColors = ConsoleColors.LightGray;
     var bg_: ConsoleColors = ConsoleColors.Black;
 
@@ -42,12 +42,11 @@ fn vgaEntryColor(fg: ?ConsoleColors, bg: ?ConsoleColors) u8 {
         bg_ = bg__;
     }
 
-    return @enumToInt(fg_) | (@enumToInt(bg_) << 4);
+    return @as(u8, @enumToInt(fg_)) | (@as(u8, @enumToInt(bg_)) << 4);
 }
- 
+
 fn vgaEntry(uc: u8, new_color: u8) u16 {
-    var c: u16 = new_color;
-    return uc | (c << 8);
+    return uc | (@as(u16, new_color) << 8);
 }
 
 pub fn initialize() void {
@@ -56,10 +55,10 @@ pub fn initialize() void {
 
 pub fn enableCursor() void {
     io.outb(0x3D4, 0x0A);
-    io.outb(0x3D5, (io.inb(0x3D5) & 0xC0) | 0);
+    io.outb(0x3D5, (io.inb(0x3D5) & 0xC0) | 15);
 
     io.outb(0x3D4, 0x0B);
-    io.outb(0x3D5, (io.inb(0x3D5) & 0xE0) | VGA_SIZE);
+    io.outb(0x3D5, (io.inb(0x3D5) & 0xE0) | 13);
 }
 
 pub fn disableCursor() void {
@@ -69,7 +68,7 @@ pub fn disableCursor() void {
 
 pub fn setCursorPosition(x: u16, y: u16) void {
     const pos = y * VGA_WIDTH + x;
- 
+
     io.outb(0x3D4, 0x0F);
     io.outb(0x3D5, pos & 0xFF);
     io.outb(0x3D4, 0x0E);
@@ -97,13 +96,13 @@ fn scroll() void {
     var x: usize = 0;
     var y: usize = 0;
 
-    while (y < VGA_HEIGHT - 1): (y += 1) {
-        while (x < VGA_WIDTH): (x += 1) {
+    while (y < VGA_HEIGHT - 1) : (y += 1) {
+        while (x < VGA_WIDTH) : (x += 1) {
             buffer[(y * VGA_WIDTH) + x] = buffer[((y + 1) * VGA_WIDTH) + x];
         }
     }
 
-    while (x < VGA_WIDTH): (x += 1) {
+    while (x < VGA_WIDTH) : (x += 1) {
         buffer[(y * VGA_WIDTH) + x] = vgaEntry(' ', color);
     }
 
@@ -124,7 +123,7 @@ pub fn putChar(c: u8) void {
             row += 1;
         },
         '\t' => column += 8,
-        else => putCharAt(c, color, column, row)
+        else => putCharAt(c, color, column, row),
     }
 
     if (c != '\n') {
@@ -144,8 +143,8 @@ pub fn putChar(c: u8) void {
 }
 
 pub fn puts(data: []const u8) void {
-    for (data) |i|
-        putChar(data[i]);
+    for (data) |c|
+        putChar(c);
 }
 
 pub fn printf(comptime format: []const u8, args: anytype) void {

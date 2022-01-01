@@ -18,6 +18,11 @@ pub fn main() void {
     _ = stage1.boot_services.setWatchdogTimer(0, 0, 0, null);
     stage1.entry();
 
-    while (true)
-        asm volatile("hlt");
+    while (true) asm volatile ("hlt");
+}
+
+pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
+    console.printf("[panic] {s}", .{message});
+    while (true) asm volatile ("hlt");
+    unreachable;
 }

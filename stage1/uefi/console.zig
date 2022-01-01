@@ -19,7 +19,7 @@ pub const ConsoleColors = enum(u8) {
     LightRed = uefi.protocols.SimpleTextOutputProtocol.lightred,
     LightMagenta = uefi.protocols.SimpleTextOutputProtocol.lightmagenta,
     LightBrown = uefi.protocols.SimpleTextOutputProtocol.yellow,
-    White = uefi.protocols.SimpleTextOutputProtocol.white
+    White = uefi.protocols.SimpleTextOutputProtocol.white,
 };
 
 var row: usize = undefined;
@@ -32,11 +32,11 @@ pub fn initialize() void {
 }
 
 pub fn enableCursor() void {
-    _ = con_out.enableCursor(1);
+    _ = con_out.enableCursor(true);
 }
 
 pub fn disableCursor() void {
-    _ = con_out.enableCursor(0);
+    _ = con_out.enableCursor(false);
 }
 
 pub fn setColor(comptime fg: ?ConsoleColors, comptime bg: ?ConsoleColors) void {
@@ -62,6 +62,7 @@ pub fn putCharAt(c: u8, x_: usize, y_: usize) void {
 
     if (&x_ == undefined)
         x = backup_x;
+
     if (&y_ == undefined)
         y = backup_y;
 
