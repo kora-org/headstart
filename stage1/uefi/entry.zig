@@ -22,7 +22,5 @@ pub fn main() void {
 }
 
 pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
-    console.printf("[panic] {s}", .{message});
-    while (true) asm volatile ("hlt");
-    unreachable;
+    stage1.panic(message, null);
 }

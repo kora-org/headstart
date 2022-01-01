@@ -34,7 +34,6 @@ pub export fn entry() callconv(.C) void {
 }
 
 pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace) noreturn {
-    _ = message;
     console.printf("[panic] {s}", .{message});
     while (true) asm volatile ("hlt");
     unreachable;

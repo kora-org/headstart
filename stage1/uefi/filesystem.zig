@@ -20,7 +20,7 @@ pub fn initialize() void {
     }
 }
 
-pub fn readFile(comptime path: []const u8, comptime size: usize) []u8 {
+pub fn readFile(comptime path: []const u8, comptime size: usize) [*]u8 {
     const utf16_path = comptime toUtf16(path);
 
     var file: *uefi.protocols.FileProtocol = undefined;
@@ -44,5 +44,5 @@ pub fn readFile(comptime path: []const u8, comptime size: usize) []u8 {
     if (file.read(&position, buffer) != uefi.Status.Success) {
         console.printf("[error] couldn't read file {s}", .{path});
     }
-    return buffer[0..size];
+    return buffer;
 }
