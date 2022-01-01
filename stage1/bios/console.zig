@@ -6,7 +6,7 @@ const VGA_WIDTH = 80;
 const VGA_HEIGHT = 25;
 const VGA_SIZE = VGA_WIDTH * VGA_HEIGHT;
 
-pub const ConsoleColors = enum(u4) {
+pub const ConsoleColors = enum(u8) {
     Black = 0,
     Blue = 1,
     Green = 2,
@@ -30,7 +30,7 @@ var column: usize = 0;
 var color = vgaEntryColor(ConsoleColors.LightGray, ConsoleColors.Black);
 var buffer = @intToPtr([*]volatile u16, 0xB8000);
 
-pub fn vgaEntryColor(fg: ?ConsoleColors, bg: ?ConsoleColors) u8 {
+fn vgaEntryColor(fg: ?ConsoleColors, bg: ?ConsoleColors) u8 {
     var fg_: ConsoleColors = ConsoleColors.LightGray;
     var bg_: ConsoleColors = ConsoleColors.Black;
 
@@ -42,11 +42,11 @@ pub fn vgaEntryColor(fg: ?ConsoleColors, bg: ?ConsoleColors) u8 {
         bg_ = bg__;
     }
 
-    return @as(u8, @enumToInt(fg_)) | (@as(u8, @enumToInt(bg_)) << 4);
+    return @enumToInt(fg_) | (@enumToInt(bg_) << 4);
 }
 
 fn vgaEntry(uc: u8, new_color: u8) u16 {
-    return uc | (@as(u16, new_color) << 8);
+    return uc | (@intCast(u16, new_color) << 8);
 }
 
 pub fn initialize() void {
@@ -55,10 +55,10 @@ pub fn initialize() void {
 
 pub fn enableCursor() void {
     io.outb(0x3D4, 0x0A);
-    io.outb(0x3D5, (io.inb(0x3D5) & 0xC0) | 15);
+    io.outb(0x3D5, (io.inb(0x3D5) & 0xC0) | 13);
 
     io.outb(0x3D4, 0x0B);
-    io.outb(0x3D5, (io.inb(0x3D5) & 0xE0) | 13);
+    io.outb(0x3D5, (io.inb(0x3D5) & 0xE0) | 15);
 }
 
 pub fn disableCursor() void {
@@ -67,7 +67,7 @@ pub fn disableCursor() void {
 }
 
 pub fn setCursorPosition(x: u16, y: u16) void {
-    const pos = y * VGA_WIDTH + x;
+    const pos = (y * VGA_WIDTH) + x;
 
     io.outb(0x3D4, 0x0F);
     io.outb(0x3D5, pos & 0xFF);
@@ -111,7 +111,7 @@ fn scroll() void {
 }
 
 pub fn putCharAt(c: u8, new_color: u8, x: usize, y: usize) void {
-    const index: usize = y * VGA_WIDTH + x;
+    const index: usize = (y * VGA_WIDTH) + x;
     buffer[index] = vgaEntry(c, new_color);
 }
 
@@ -127,10 +127,10 @@ pub fn putChar(c: u8) void {
     }
 
     if (c != '\n') {
-        column += 1;
+        defer column += 1;
         if (column == VGA_WIDTH) {
             column = 0;
-            row += 1;
+            defer row += 1;
             if (row == VGA_HEIGHT) {
                 scroll();
             }
