@@ -1,6 +1,8 @@
 const io = @import("../../lib/io.zig");
+const heap = @import("std").heap;
 const fmt = @import("std").fmt;
 const mem = @import("std").mem;
+const Writer = @import("std").io.Writer;
 
 const VGA_WIDTH = 80;
 const VGA_HEIGHT = 25;
@@ -71,16 +73,20 @@ pub fn setCursorPosition(x: u16, y: u16) void {
 
     io.outb(0x3D4, 0x0F);
     io.outb(0x3D5, pos & 0xFF);
+
     io.outb(0x3D4, 0x0E);
     io.outb(0x3D5, (pos >> 8) & 0xFF);
 }
 
 pub fn getCursorPosition() u16 {
     var pos: u16 = 0;
+
     io.outb(0x3D4, 0x0F);
     pos |= io.inb(0x3D5);
+
     io.outb(0x3D4, 0x0E);
     pos |= io.inb(0x3D5) << 8;
+
     return pos;
 }
 
@@ -147,7 +153,13 @@ pub fn puts(data: []const u8) void {
         putChar(c);
 }
 
+pub const writer = Writer(void, error{}, callback){ .context = {} };
+
+fn callback(_: void, string: []const u8) error{}!usize {
+    puts(string);
+    return string.len;
+}
+
 pub fn printf(comptime format: []const u8, args: anytype) void {
-    var buf: [100]u8 = undefined;
-    puts(fmt.bufPrint(&buf, format, args) catch unreachable);
+    fmt.format(writer, format, args) catch unreachable;
 }

@@ -5,6 +5,8 @@ const filesystem = @import("filesystem");
 const io = @import("io");
 const builtin = @import("builtin");
 const uefi = @import("std").os.uefi;
+const mem = @import("std").mem;
+const zzz = @import("zzz");
 
 pub var system_table: *uefi.tables.SystemTable = undefined;
 pub var boot_services: *uefi.tables.BootServices = undefined;
@@ -14,7 +16,7 @@ pub export fn entry() callconv(.C) void {
     console.initialize();
     console.disableCursor();
     console.setColor(console.ConsoleColors.Green, null);
-    console.puts("Xeptoboot 0.0.1\n\n");
+    console.printf("Xeptoboot {s}\n\n", .{"0.0.1"});
     console.putChar('>');
     console.setColor(console.ConsoleColors.LightGray, null);
     console.puts(" 1\n");
@@ -25,9 +27,27 @@ pub export fn entry() callconv(.C) void {
 
     filesystem.initialize();
     io.outb(0xe9, 'a');
-    const content = filesystem.readFile("\\test.zzz", 552);
+    const content = filesystem.readFile("\\xeptoboot.zzz");
     io.outb(0xe9, 'b');
-    console.printf("{any}", .{content});
+
+    var path = mem.split(u8, "1::2::3", "::");
+    console.printf("{s} {s}\n", .{ path.next(), path.rest() });
+
+    var tree = zzz.ZTree(1, 1024){};
+    var node = tree.appendText(content) catch unreachable;
+
+    _ = tree;
+    _ = node;
+    //var depth: isize = 0;
+    //var iter = node;
+    //while (iter.nextUntil(node, &depth)) |c| : (iter = c) {
+    //    var i: isize = 0;
+    //    while (i < depth) : (i += 1) {
+    //        console.printf("  ", .{});
+    //    }
+    //    console.printf("{}\n", .{c.value});
+    //}
+
     io.outb(0xe9, 'c');
 
     while (true) asm volatile ("hlt");

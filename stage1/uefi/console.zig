@@ -1,5 +1,6 @@
 const uefi = @import("std").os.uefi;
 const fmt = @import("std").fmt;
+const Writer = @import("std").io.Writer;
 
 pub var con_out: *uefi.protocols.SimpleTextOutputProtocol = undefined;
 
@@ -85,7 +86,13 @@ pub fn puts(data: []const u8) void {
         putChar(c);
 }
 
+pub const writer = Writer(void, error{}, callback){ .context = {} };
+
+fn callback(_: void, string: []const u8) error{}!usize {
+    puts(string);
+    return string.len;
+}
+
 pub fn printf(comptime format: []const u8, args: anytype) void {
-    var buf: [100]u8 = undefined;
-    puts(fmt.bufPrint(&buf, format, args) catch unreachable);
+    fmt.format(writer, format, args) catch unreachable;
 }

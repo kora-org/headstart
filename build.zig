@@ -13,6 +13,7 @@ fn build_bios(b: *Builder) *std.build.RunStep {
     bios.addPackagePath("console", "stage1/bios/console.zig");
     bios.addPackagePath("graphics", "stage1/bios/graphics.zig");
     bios.addPackagePath("filesystem", "stage1/bios/filesystem.zig");
+    bios.addPackagePath("allocator", "stage1/bios/allocator.zig");
     bios.addAssemblyFile("stage1/bios/entry.s");
     bios.setOutputDir(out_path);
 
@@ -46,9 +47,7 @@ fn build_bios(b: *Builder) *std.build.RunStep {
     // zig fmt: off
     const bootsector = b.addSystemCommand(&[_][]const u8{
         "nasm", "-Ox", "-w+all", "-fbin", "stage0/bootsect.s", "-Istage0",
-        std.mem.concat(b.allocator, u8, &[_][]const u8{
-            "-o", out_path, "/stage0.bin"
-        }) catch unreachable
+        "-o", out_path, "/stage0.bin",
     });
     // zig fmt: on
     bootsector.step.dependOn(&bin.step);
@@ -60,8 +59,8 @@ fn build_bios(b: *Builder) *std.build.RunStep {
             "cat ",
             out_path, "/stage0.bin ",
             out_path, "/stage1.bin ",
-            ">", out_path, "/xeptoboot.bin"
-        }) catch unreachable
+            ">", out_path, "/xeptoboot.bin",
+        }) catch unreachable,
     });
     // zig fmt: on
     append.step.dependOn(&bootsector.step);
@@ -81,6 +80,7 @@ fn build_uefi(b: *Builder) *std.build.LibExeObjStep {
     uefi.addPackagePath("console", "stage1/uefi/console.zig");
     uefi.addPackagePath("graphics", "stage1/uefi/graphics.zig");
     uefi.addPackagePath("filesystem", "stage1/uefi/filesystem.zig");
+    uefi.addPackagePath("allocator", "stage1/uefi/allocator.zig");
     uefi.setOutputDir(out_path);
 
     const features = std.Target.x86.Feature;
@@ -124,7 +124,7 @@ fn run_qemu_bios(b: *Builder, path: []const u8) *std.build.RunStep {
         // This prevents the BIOS to boot the bootsector
         // "-machine", "q35,accel=kvm:whpx:tcg",
         "-machine", "accel=kvm:whpx:tcg",
-        "-no-reboot", "-no-shutdown"
+        "-no-reboot", "-no-shutdown",
         // zig fmt: on
     };
 
@@ -143,7 +143,7 @@ fn run_qemu_uefi(b: *Builder, dir: []const u8) *std.build.RunStep {
         std.mem.concat(b.allocator, u8, &[_][]const u8{
             "mkdir -p ", dir, "/efi-root/EFI/BOOT && ",
             "cp ", dir, "/bin/xeptoboot.efi ", dir, "/efi-root/EFI/BOOT/BOOTX64.EFI && ",
-            "cp ", dir, "/../xeptoboot.zzz.example ", dir, "/efi-root/test.zzz && ",
+            "cp ", dir, "/../xeptoboot.zzz.example ", dir, "/efi-root/xeptoboot.zzz && ",
             "qemu-system-x86_64 ",
             // This doesn't work for some reason
             // "-drive if=none,format=raw,media=disk,file=fat:rw:", dir, "/efi-root ",
@@ -153,8 +153,8 @@ fn run_qemu_uefi(b: *Builder, dir: []const u8) *std.build.RunStep {
             "-m 4G ",
             "-machine q35,accel=kvm:whpx:tcg ",
             "-drive if=pflash,format=raw,unit=0,file=external/ovmf-prebuilt/bin/RELEASEX64_OVMF.fd,readonly=on ",
-            "-no-reboot -no-shutdown"
-        }) catch unreachable
+            "-no-reboot -no-shutdown",
+        }) catch unreachable,
         // zig fmt: on
     };
 

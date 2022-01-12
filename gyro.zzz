@@ -18,4 +18,8 @@ deps:
   leecannon/bitjuggle: ^1.0.1
   leecannon/pc_keyboard: ^0.1.0
   leecannon/x86_64: ^1.0.0
-  mattnite/zzz: ^0.0.2
+  zzz:
+    git:
+      url: "https://github.com/gruebite/zzz.git"
+      ref: main
+      root: src/main.zig

@@ -9,7 +9,7 @@ pub fn initialize() void {
         &uefi.protocols.GraphicsOutputProtocol.guid,
         null,
         @ptrCast(*?*anyopaque, &graphics_output_protocol),
-    ) == uefi.Status.Success) {
+    ) == .Success) {
         _ = console.con_out.reset(false);
         // TODO:: search for compatible mode and set 800x600 if the display is unsupported
         //_ = graphics_output_protocol.?.setMode(2);
