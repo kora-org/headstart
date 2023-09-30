@@ -1,17 +1,22 @@
-# As of making this example config file, XeptoBoot is very incomplete and
+# As of making this example config file, Headstart is very incomplete and
 # doesn't support config files. This should be resolved when version 0.1.0-alpha
 # is released
 
 resolution: 1920x1080x32
-entries
-  : name: Your Linux distro
+entries:
+  - name: Kora
+    kernel: "boot::boot/vmydin"
+    protocol: ydin
+    modules:
+      init: "boot::boot/modules/init"
+  - name: Your Linux distro
     kernel: "boot::boot/vmlinux"
     protocol: linux
     cmdline: root=UUID=your-partition-uuid-here rw quiet
-    modules
+    modules:
       initramfs: "boot::boot/initrd.tar.gz"
-  : name: Eaxmple stivale2 kernel
+  - name: Eaxmple Limine kernel
     kernel: "boot::boot/example.elf"
-    protocol: stivale2
-    modules
+    protocol: limine
+    modules:
       module_string: "boot::boot/module.example"

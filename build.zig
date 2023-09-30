@@ -1,182 +1,169 @@
 const std = @import("std");
-const Builder = @import("std").build.Builder;
-const Target = @import("std").Target;
-const CrossTarget = @import("std").zig.CrossTarget;
-const pkgs = @import("deps.zig").pkgs;
+const builtin = @import("builtin");
+const Arch = std.Target.Cpu.Arch;
+const CrossTarget = std.zig.CrossTarget;
 
-fn build_bios(b: *Builder) *std.build.RunStep {
-    const out_path = b.pathJoin(&.{ b.install_path, "/bin" });
+const kora_version = std.SemanticVersion{
+    .major = 0,
+    .minor = 1,
+    .patch = 0,
+};
 
-    const bios = b.addExecutable("stage1.elf", "stage1/stage1.zig");
-    bios.setMainPkgPath(".");
-    bios.addPackagePath("io", "lib/io.zig");
-    bios.addPackagePath("console", "stage1/bios/console.zig");
-    bios.addPackagePath("graphics", "stage1/bios/graphics.zig");
-    bios.addPackagePath("filesystem", "stage1/bios/filesystem.zig");
-    bios.addPackagePath("allocator", "stage1/bios/allocator.zig");
-    bios.addAssemblyFile("stage1/bios/entry.s");
-    bios.setOutputDir(out_path);
+pub fn build(b: *std.Build) !void {
+    const arch = b.option(Arch, "arch", "The CPU architecture to build for") orelse .x86_64;
+    const target = try genTarget(arch);
+    const optimize = b.standardOptimizeOption(.{});
 
-    const features = std.Target.x86.Feature;
-    var disabled_features = std.Target.Cpu.Feature.Set.empty;
-    var enabled_features = std.Target.Cpu.Feature.Set.empty;
-    disabled_features.addFeature(@enumToInt(features.mmx));
-    disabled_features.addFeature(@enumToInt(features.sse));
-    disabled_features.addFeature(@enumToInt(features.sse2));
-    disabled_features.addFeature(@enumToInt(features.avx));
-    disabled_features.addFeature(@enumToInt(features.avx2));
+    const exe_options = b.addOptions();
 
-    enabled_features.addFeature(@enumToInt(features.soft_float));
-    bios.code_model = .kernel;
+    // From zls
+    const version = v: {
+        const version_string = b.fmt("{d}.{d}.{d}", .{ kora_version.major, kora_version.minor, kora_version.patch });
 
-    bios.setTarget(CrossTarget{
-        .cpu_arch = Target.Cpu.Arch.i386,
-        .os_tag = Target.Os.Tag.freestanding,
-        .abi = Target.Abi.none,
-        .cpu_features_sub = disabled_features,
-        .cpu_features_add = enabled_features,
+        var code: u8 = undefined;
+        const git_describe_untrimmed = b.execAllowFail(&[_][]const u8{
+            "git", "-C", b.build_root.path.?, "describe", "--match", "*.*.*", "--tags",
+        }, &code, .Ignore) catch break :v version_string;
+
+        const git_describe = std.mem.trim(u8, git_describe_untrimmed, " \n\r");
+
+        switch (std.mem.count(u8, git_describe, "-")) {
+            0 => {
+                // Tagged release version (e.g. 0.10.0).
+                std.debug.assert(std.mem.eql(u8, git_describe, version_string)); // tagged release must match version string
+                break :v version_string;
+            },
+            2 => {
+                // Untagged development build (e.g. 0.10.0-dev.216+34ce200).
+                var it = std.mem.split(u8, git_describe, "-");
+                const tagged_ancestor = it.first();
+                const commit_height = it.next().?;
+                const commit_id = it.next().?;
+
+                const ancestor_ver = std.SemanticVersion.parse(tagged_ancestor) catch unreachable;
+                std.debug.assert(kora_version.order(ancestor_ver) == .gt); // version must be greater than its previous version
+                std.debug.assert(std.mem.startsWith(u8, commit_id, "g")); // commit hash is prefixed with a 'g'
+
+                break :v b.fmt("{s}-dev.{s}+{s}", .{ version_string, commit_height, commit_id[1..] });
+            },
+            else => {
+                std.debug.print("Unexpected 'git describe' output: '{s}'\n", .{git_describe});
+                std.process.exit(1);
+            },
+        }
+    };
+
+    exe_options.addOption([:0]const u8, "version", b.allocator.dupeZ(u8, version) catch "0.1.0-dev");
+
+    const exe = b.addExecutable(.{
+        .name = "headstart",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
     });
+    exe.addOptions("build_options", exe_options);
+    exe.code_model = switch (target.cpu_arch.?) {
+        .x86_64 => .kernel,
+        .aarch64 => .small,
+        .riscv64 => .medium,
+        else => return error.UnsupportedArchitecture,
+    };
 
-    bios.setBuildMode(b.standardReleaseOptions());
-    bios.setLinkerScriptPath(.{ .path = "stage1/bios/linker.ld" });
-    pkgs.addAllTo(bios);
-    bios.install();
-
-    const bin = b.addInstallRaw(bios, "stage1.bin", .{});
-
-    // zig fmt: off
-    const bootsector = b.addSystemCommand(&[_][]const u8{
-        "nasm", "-Ox", "-w+all", "-fbin", "stage0/bootsect.s", "-Istage0",
-        "-o", out_path, "/stage0.bin",
-    });
-    // zig fmt: on
-    bootsector.step.dependOn(&bin.step);
-
-    // zig fmt: off
-    const append = b.addSystemCommand(&[_][]const u8{
-        "/bin/sh", "-c",
-        std.mem.concat(b.allocator, u8, &[_][]const u8{
-            "cat ",
-            out_path, "/stage0.bin ",
-            out_path, "/stage1.bin ",
-            ">", out_path, "/xeptoboot.bin",
-        }) catch unreachable,
-    });
-    // zig fmt: on
-    append.step.dependOn(&bootsector.step);
-
-    const bios_step = b.step("bios", "Build the BIOS version");
-    bios_step.dependOn(&append.step);
-
-    return append;
+    b.installArtifact(exe);
+    _ = try run(b, arch);
 }
 
-fn build_uefi(b: *Builder) *std.build.LibExeObjStep {
-    const out_path = b.pathJoin(&.{ b.install_path, "/bin" });
+fn genTarget(arch: Arch) !CrossTarget {
+    var target = CrossTarget{
+        .cpu_arch = arch,
+        .os_tag = .uefi,
+        .abi = .msvc,
+    };
 
-    const uefi = b.addExecutable("xeptoboot", "stage1/uefi/entry.zig");
-    uefi.setMainPkgPath(".");
-    uefi.addPackagePath("io", "lib/io.zig");
-    uefi.addPackagePath("console", "stage1/uefi/console.zig");
-    uefi.addPackagePath("graphics", "stage1/uefi/graphics.zig");
-    uefi.addPackagePath("filesystem", "stage1/uefi/filesystem.zig");
-    uefi.addPackagePath("allocator", "stage1/uefi/allocator.zig");
-    uefi.setOutputDir(out_path);
+    switch (arch) {
+        .x86_64, .aarch64, .riscv64 => {},
+        else => return error.UnsupportedArchitecture,
+    }
 
-    const features = std.Target.x86.Feature;
-    var disabled_features = std.Target.Cpu.Feature.Set.empty;
-    var enabled_features = std.Target.Cpu.Feature.Set.empty;
-    disabled_features.addFeature(@enumToInt(features.mmx));
-    disabled_features.addFeature(@enumToInt(features.sse));
-    disabled_features.addFeature(@enumToInt(features.sse2));
-    disabled_features.addFeature(@enumToInt(features.avx));
-    disabled_features.addFeature(@enumToInt(features.avx2));
-
-    enabled_features.addFeature(@enumToInt(features.soft_float));
-    uefi.code_model = .kernel;
-
-    uefi.setTarget(CrossTarget{
-        .cpu_arch = Target.Cpu.Arch.x86_64,
-        .os_tag = Target.Os.Tag.uefi,
-        .abi = Target.Abi.msvc,
-        .cpu_features_sub = disabled_features,
-        .cpu_features_add = enabled_features,
-    });
-
-    uefi.setBuildMode(b.standardReleaseOptions());
-    pkgs.addAllTo(uefi);
-    uefi.install();
-
-    const uefi_step = b.step("uefi", "Build the UEFI version");
-    uefi_step.dependOn(&uefi.step);
-
-    return uefi;
+    return target;
 }
 
-fn run_qemu_bios(b: *Builder, path: []const u8) *std.build.RunStep {
+fn downloadEdk2(b: *std.Build, arch: Arch) !void {
+    const link = switch (arch) {
+        .x86_64 => "https://retrage.github.io/edk2-nightly/bin/RELEASEX64_OVMF.fd",
+        .aarch64 => "https://retrage.github.io/edk2-nightly/bin/RELEASEAARCH64_QEMU_EFI.fd",
+        .riscv64 => "https://retrage.github.io/edk2-nightly/bin/RELEASERISCV64_VIRT.fd",
+        else => return error.UnsupportedArchitecture,
+    };
+
+    const cmd = &[_][]const u8{ "curl", link, "-Lo", try edk2FileName(b, arch) };
+    var child_proc = std.ChildProcess.init(cmd, b.allocator);
+    try child_proc.spawn();
+    const ret_val = try child_proc.wait();
+    try std.testing.expectEqual(ret_val, .{ .Exited = 0 });
+}
+
+fn edk2FileName(b: *std.Build, arch: Arch) ![]const u8 {
+    return std.mem.concat(b.allocator, u8, &[_][]const u8{ "zig-cache/edk2-", @tagName(arch), ".fd" });
+}
+
+fn run(b: *std.Build, arch: Arch) !*std.build.RunStep {
+    _ = std.fs.cwd().statFile(try edk2FileName(b, arch)) catch try downloadEdk2(b, arch);
+
+    const qemu_executable = switch (arch) {
+        .x86_64 => "qemu-system-x86_64",
+        .aarch64 => "qemu-system-aarch64",
+        .riscv64 => "qemu-system-riscv64",
+        else => return error.UnsupportedArchitecture,
+    };
+
     const cmd = &[_][]const u8{
         // zig fmt: off
-        "qemu-system-x86_64",
-        "-hda", path,
-        "-debugcon", "stdio",
-        "-vga", "virtio",
-        "-m", "4G",
-        // This prevents the BIOS to boot the bootsector
-        // "-machine", "q35,accel=kvm:whpx:tcg",
-        "-machine", "accel=kvm:whpx:tcg",
-        "-no-reboot", "-no-shutdown",
+        "sh", "-c",
+        try std.mem.concat(b.allocator, u8, &[_][]const u8{
+        try std.mem.concat(b.allocator, u8, &[_][]const u8{
+            "mkdir -p zig-out/efi-root/EFI/BOOT && ",
+            "cp zig-out/bin/headstart.efi zig-out/efi-root/EFI/BOOT/BOOTX64.EFI && ",
+            "cp headstart.example.yml zig-out/efi-root/headstart.yml && ",
+        }),
+        try std.mem.concat(b.allocator, u8, switch (arch) {
+            .x86_64 => &[_][]const u8{
+                // zig fmt: off
+                qemu_executable, " ",
+                //"-s -S ",
+                "-cpu max ",
+                "-smp 2 ",
+                "-M q35,accel=kvm:whpx:hvf:tcg ",
+                "-m 2G ",
+                "-hda fat:rw:zig-out/efi-root ",
+                "-bios ", try edk2FileName(b, arch), " ",
+                //"-serial stdio ",
+                // zig fmt: on
+            },
+            .aarch64, .riscv64 => &[_][]const u8{
+                // zig fmt: off
+                qemu_executable, " ",
+                //"-s -S ",
+                "-cpu max ",
+                "-smp 2 ",
+                "-M virt,accel=kvm:whpx:hvf:tcg ",
+                "-m 2G ",
+                "-hda fat:rw:zig-out/efi-root ",
+                "-bios ", try edk2FileName(b, arch), " ",
+                //"-serial stdio ",
+                // zig fmt: on
+            },
+            else => return error.UnsupportedArchitecture,
+        }),
+        }),
         // zig fmt: on
     };
 
-    const run_step = b.addSystemCommand(cmd);
+    const run_cmd = b.addSystemCommand(cmd);
+    run_cmd.step.dependOn(b.getInstallStep());
 
-    const run_command = b.step("run-bios", "Run the BIOS version");
-    run_command.dependOn(&run_step.step);
+    const run_step = b.step("run", "Boot Headstart in QEMU");
+    run_step.dependOn(&run_cmd.step);
 
-    return run_step;
-}
-
-fn run_qemu_uefi(b: *Builder, dir: []const u8) *std.build.RunStep {
-    const cmd = &[_][]const u8{
-        // zig fmt: off
-        "/bin/sh", "-c",
-        std.mem.concat(b.allocator, u8, &[_][]const u8{
-            "mkdir -p ", dir, "/efi-root/EFI/BOOT && ",
-            "cp ", dir, "/bin/xeptoboot.efi ", dir, "/efi-root/EFI/BOOT/BOOTX64.EFI && ",
-            "cp ", dir, "/../xeptoboot.zzz.example ", dir, "/efi-root/xeptoboot.zzz && ",
-            "qemu-system-x86_64 ",
-            // This doesn't work for some reason
-            // "-drive if=none,format=raw,media=disk,file=fat:rw:", dir, "/efi-root ",
-            "-hda fat:rw:", dir, "/efi-root ",
-            "-debugcon stdio ",
-            "-vga virtio ",
-            "-m 4G ",
-            "-machine q35,accel=kvm:whpx:tcg ",
-            "-drive if=pflash,format=raw,unit=0,file=external/ovmf-prebuilt/bin/RELEASEX64_OVMF.fd,readonly=on ",
-            "-no-reboot -no-shutdown",
-        }) catch unreachable,
-        // zig fmt: on
-    };
-
-    const run_step = b.addSystemCommand(cmd);
-
-    const run_command = b.step("run-uefi", "Run the UEFI version");
-    run_command.dependOn(&run_step.step);
-
-    return run_step;
-}
-
-pub fn build(b: *Builder) void {
-    const bios_path = b.pathJoin(&.{b.install_path, "/bin/xeptoboot.bin"});
-
-    const bios = build_bios(b);
-    const uefi = build_uefi(b);
-
-    const bios_step = run_qemu_bios(b, bios_path);
-    bios_step.step.dependOn(&bios.step);
-
-    const uefi_step = run_qemu_uefi(b, b.install_path);
-    uefi_step.step.dependOn(&uefi.step);
-
-    b.default_step.dependOn(&uefi_step.step);
+    return run_cmd;
 }

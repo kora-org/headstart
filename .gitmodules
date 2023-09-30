@@ -1,3 +1,0 @@
-[submodule "external/ovmf-prebuilt"]
-	path = external/ovmf-prebuilt
-	url = https://github.com/retrage/edk2-nightly
