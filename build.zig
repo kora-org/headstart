@@ -61,6 +61,15 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
+    exe.addCSourceFiles(&[_][]const u8{
+        "external/flanterm/flanterm.c",
+        "external/flanterm/backends/fb.c",
+    }, &[_][]const u8{
+        "-ffreestanding",
+        "-nostdlib",
+        "-mno-red-zone",
+    });
+    exe.addIncludePath(.{ .path = "external" });
     exe.addOptions("build_options", exe_options);
     exe.code_model = switch (target.cpu_arch.?) {
         .x86_64 => .kernel,
