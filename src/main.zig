@@ -2,13 +2,7 @@ const std = @import("std");
 const uefi = std.os.uefi;
 const builtin = @import("builtin");
 const console = @import("console/flanterm.zig");
-const flanterm = @cImport({
-    @cInclude("flanterm/flanterm.h");
-    @cInclude("flanterm/backends/fb.h");
-});
 pub const panic = @import("panic.zig").panic;
-
-var ft: *flanterm.flanterm_context = undefined;
 
 pub const std_options = struct {
     pub fn logFn(comptime level: std.log.Level, comptime scope: @Type(.EnumLiteral), comptime format: []const u8, args: anytype) void {
