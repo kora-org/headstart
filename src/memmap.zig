@@ -51,30 +51,7 @@ const MemoryMap = struct {
         }
     };
 
-    /// Removes entries with length 0
-    pub fn removeEmpty(self: *MemoryMap) void {
-        for (0..self.entry_count) |i| {
-            if (self.entries[i].length != 0) continue;
-
-            for (i..self.entry_count - 1) |j|
-                self.entries[j] = self.entries[j + 1];
-
-            self.entry_count -= 1;
-        }
-    }
-
-    /// Removes duplicate entries
-    pub fn removeDuplicates(self: *MemoryMap) void {
-        var i: usize = 0;
-        for (0..self.entry_count) |j| {
-            if (!std.meta.eql(self.entries[j], self.entries[i - 1])) {
-                self.entries[i] = self.entries[j];
-                i += 1;
-            }
-        }
-        self.entry_count = i;
-    }
-
+    /// Clean up entries.
     fn sanitize(self: *MemoryMap) void {
         var count: usize = self.entry_count;
         for (0..count) |i| {
