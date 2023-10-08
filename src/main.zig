@@ -1,6 +1,7 @@
 const std = @import("std");
 const uefi = std.os.uefi;
 const builtin = @import("builtin");
+const utils = @import("utils.zig");
 const console = @import("console/flanterm.zig");
 pub const panic = @import("panic.zig").panic;
 
@@ -17,15 +18,22 @@ pub const std_options = struct {
     }
 };
 
-pub export fn main() void {
-    const boot_services = uefi.system_table.boot_services.?;
-    var gop: *uefi.protocols.GraphicsOutputProtocol = undefined;
-    _ = boot_services.locateProtocol(&uefi.protocols.GraphicsOutputProtocol.guid, null, @as(*?*anyopaque, @ptrCast(&gop)));
+pub fn main() uefi.Status {
+    return efi_main() catch |err| @panic(@errorName(err));
+}
 
-    console.init(gop);
+pub fn efi_main() !uefi.Status {
+    utils.system_table = uefi.system_table;
+    utils.boot_services = uefi.system_table.boot_services.?;
+    utils.runtime_services = uefi.system_table.runtime_services;
+    utils.gop = try utils.loadProtocol(uefi.protocols.GraphicsOutputProtocol);
+    console.init();
+
     std.log.info("Headstart version {s}", .{"0.1.0"});
     std.log.info("Compiled with Zig v{}", .{builtin.zig_version});
     std.log.info("All your {s} are belong to us", .{"codebase"});
     console.print("i hate myslfe\n", .{}) catch unreachable;
     @panic("h");
 }
+
+export fn __chkstk() void {}

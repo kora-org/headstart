@@ -126,21 +126,27 @@ fn run(b: *std.Build, arch: Arch) !*std.build.RunStep {
         else => return error.UnsupportedArchitecture,
     };
 
+    const boot_efi_filename = switch (arch) {
+        .x86_64 => "BOOTX64.EFI",
+        .aarch64 => "BOOTAA64.EFI",
+        .riscv64 => "BOOTRISCV64.EFI",
+        else => return error.UnsupportedArchitecture,
+    };
+
     const cmd = &[_][]const u8{
         // zig fmt: off
         "sh", "-c",
         try std.mem.concat(b.allocator, u8, &[_][]const u8{
         try std.mem.concat(b.allocator, u8, &[_][]const u8{
             "mkdir -p zig-out/efi-root/EFI/BOOT && ",
-            "cp zig-out/bin/headstart.efi zig-out/efi-root/EFI/BOOT/BOOTX64.EFI && ",
+            "cp zig-out/bin/headstart.efi zig-out/efi-root/EFI/BOOT/", boot_efi_filename, " && ",
             "cp headstart.example.yml zig-out/efi-root/headstart.yml && ",
         }),
         try std.mem.concat(b.allocator, u8, switch (arch) {
             .x86_64 => &[_][]const u8{
                 // zig fmt: off
                 qemu_executable, " ",
-                //"-s -S ",
-                "-cpu max ",
+                //"-cpu max ",
                 "-smp 2 ",
                 "-M q35,accel=kvm:whpx:hvf:tcg ",
                 "-m 2G ",
@@ -152,10 +158,10 @@ fn run(b: *std.Build, arch: Arch) !*std.build.RunStep {
             .aarch64, .riscv64 => &[_][]const u8{
                 // zig fmt: off
                 qemu_executable, " ",
-                //"-s -S ",
-                "-cpu max ",
+                "-cpu cortex-a57 ",
                 "-smp 2 ",
                 "-M virt,accel=kvm:whpx:hvf:tcg ",
+                "-device virtio-gpu-pci ",
                 "-m 2G ",
                 "-hda fat:rw:zig-out/efi-root ",
                 "-bios ", try edk2FileName(b, arch), " ",

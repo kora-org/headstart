@@ -1,18 +1,46 @@
 const std = @import("std");
 const uefi = std.os.uefi;
+const utils = @import("../utils.zig");
 const c = @cImport({
     @cInclude("flanterm/flanterm.h");
     @cInclude("flanterm/backends/fb.h");
 });
 
 pub var console: *c.flanterm_context = undefined;
+pub var framebuffer: []u8 = undefined;
 
-pub fn init(gop: *uefi.protocols.GraphicsOutputProtocol) void {
-    console = c.flanterm_fb_simple_init(
-        gop.mode.frame_buffer_base,
-        gop.mode.info.horizontal_resolution,
-        gop.mode.info.vertical_resolution,
-        gop.mode.info.horizontal_resolution * 4,
+export fn _malloc(size: usize) callconv(.C) ?*anyopaque {
+    const ret = uefi.pool_allocator.alloc(u8, size) catch unreachable;
+    return @as(*anyopaque, @ptrCast(ret.ptr));
+}
+
+export fn _free(ptr: ?*anyopaque, _: usize) callconv(.C) void {
+    _ = uefi.system_table.boot_services.?.freePool(@alignCast(@ptrCast(ptr.?)));
+}
+
+pub fn init() void {
+    framebuffer = uefi.pool_allocator.alloc(u8, utils.gop.mode.info.horizontal_resolution * utils.gop.mode.info.vertical_resolution * 4) catch unreachable;
+    console = c.flanterm_fb_init(
+        &_malloc,
+        &_free,
+        @intFromPtr(framebuffer.ptr),
+        utils.gop.mode.info.horizontal_resolution,
+        utils.gop.mode.info.vertical_resolution,
+        utils.gop.mode.info.horizontal_resolution * 4,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
     );
 }
 
@@ -58,20 +86,22 @@ pub fn putCharAt(char: u8, x_: usize, y_: usize) void {
     console.set_cursor_pos(backup_x, backup_y);
 }
 
-pub fn putChar(char: u8) void {
+pub fn putChar(char: u8) !void {
     console.raw_putchar(char);
+    try utils.blit(framebuffer);
 }
 
-pub fn write(string: []const u8) void {
+pub fn write(string: []const u8) !void {
     c.flanterm_write(console, string.ptr, string.len);
+    try utils.blit(framebuffer);
 }
 
-pub const writer = std.io.Writer(void, error{}, callback){
+pub const writer = std.io.Writer(void, uefi.Status.EfiError, callback){
     .context = {},
 };
 
-fn callback(_: void, string: []const u8) error{}!usize {
-    write(string);
+fn callback(_: void, string: []const u8) !usize {
+    try write(string);
     return string.len;
 }
 

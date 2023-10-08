@@ -1,4 +1,5 @@
 const std = @import("std");
+const utils = @import("utils.zig");
 
 // TODO: try find out how to get debug info out of codeview debug infos
 pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace, return_address: ?usize) noreturn {
@@ -19,8 +20,5 @@ pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace, return_address: ?
 
     std.log.err("System halted.", .{});
 
-    while (true)
-        asm volatile ("hlt");
-
-    unreachable;
+    utils.halt();
 }

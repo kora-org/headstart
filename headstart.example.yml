@@ -8,7 +8,12 @@ entries:
     kernel: "boot::boot/vmydin"
     protocol: ydin
     modules:
-      init: "boot::boot/modules/init"
+      init: "boot::boot/kora/modules/init"
+  - name: Skift
+    kernel: "boot::boot/hjert"
+    protocol: handover
+    modules:
+      init: "boot::boot/skift/modules/init"
   - name: Your Linux distro
     kernel: "boot::boot/vmlinux"
     protocol: linux
@@ -18,5 +23,10 @@ entries:
   - name: Eaxmple Limine kernel
     kernel: "boot::boot/example.elf"
     protocol: limine
+    modules:
+      module_string: "boot::boot/module.example"
+  - name: Eaxmple UEFI application
+    kernel: "boot::boot/example.efi"
+    protocol: chainload
     modules:
       module_string: "boot::boot/module.example"
