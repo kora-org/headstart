@@ -64,7 +64,7 @@ pub fn getCursorPosition() usize {
 }
 
 pub fn clear() void {
-    console.clear();
+    console.clear.?(console, true);
 }
 
 pub fn putCharAt(char: u8, x_: usize, y_: usize) void {

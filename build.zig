@@ -154,6 +154,7 @@ fn run(b: *std.Build, arch: Arch) !void {
                 "-bios ", try edk2FileName(b, arch), " ",
                 "-no-reboot ",
                 "-no-shutdown ",
+                "-d guest_errors ",
                 // zig fmt: on
             },
             .aarch64, .riscv64 => &[_][]const u8{
