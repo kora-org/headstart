@@ -79,7 +79,7 @@ pub fn build(b: *std.Build) !void {
     };
 
     b.installArtifact(exe);
-    _ = try run(b, arch);
+    try run(b, arch);
 }
 
 fn genTarget(arch: Arch) !CrossTarget {
@@ -116,7 +116,7 @@ fn edk2FileName(b: *std.Build, arch: Arch) ![]const u8 {
     return std.mem.concat(b.allocator, u8, &[_][]const u8{ "zig-cache/edk2-", @tagName(arch), ".fd" });
 }
 
-fn run(b: *std.Build, arch: Arch) !*std.build.RunStep {
+fn run(b: *std.Build, arch: Arch) !void {
     _ = std.fs.cwd().statFile(try edk2FileName(b, arch)) catch try downloadEdk2(b, arch);
 
     const qemu_executable = switch (arch) {
@@ -140,7 +140,7 @@ fn run(b: *std.Build, arch: Arch) !*std.build.RunStep {
         try std.mem.concat(b.allocator, u8, &[_][]const u8{
             "mkdir -p zig-out/efi-root/EFI/BOOT && ",
             "cp zig-out/bin/headstart.efi zig-out/efi-root/EFI/BOOT/", boot_efi_filename, " && ",
-            "cp headstart.example.yml zig-out/efi-root/headstart.yml && ",
+            "cp headstart.example.json zig-out/efi-root/headstart.json && ",
         }),
         try std.mem.concat(b.allocator, u8, switch (arch) {
             .x86_64 => &[_][]const u8{
@@ -152,7 +152,8 @@ fn run(b: *std.Build, arch: Arch) !*std.build.RunStep {
                 "-m 2G ",
                 "-hda fat:rw:zig-out/efi-root ",
                 "-bios ", try edk2FileName(b, arch), " ",
-                //"-serial stdio ",
+                "-no-reboot ",
+                "-no-shutdown ",
                 // zig fmt: on
             },
             .aarch64, .riscv64 => &[_][]const u8{
@@ -165,7 +166,8 @@ fn run(b: *std.Build, arch: Arch) !*std.build.RunStep {
                 "-m 2G ",
                 "-hda fat:rw:zig-out/efi-root ",
                 "-bios ", try edk2FileName(b, arch), " ",
-                //"-serial stdio ",
+                "-no-reboot ",
+                "-no-shutdown ",
                 // zig fmt: on
             },
             else => return error.UnsupportedArchitecture,
@@ -179,6 +181,4 @@ fn run(b: *std.Build, arch: Arch) !*std.build.RunStep {
 
     const run_step = b.step("run", "Boot Headstart in QEMU");
     run_step.dependOn(&run_cmd.step);
-
-    return run_cmd;
 }

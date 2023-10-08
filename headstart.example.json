@@ -1,0 +1,55 @@
+{
+  "resolution": "1920x1080x32",
+  "entries": [
+    {
+      "name": "Kora",
+      "kernel": "/boot/vmydin",
+      "protocol": "ydin",
+      "modules": [
+        {
+          "name": "init",
+          "module": "/boot/kora/modules/init"
+        }
+      ]
+    },
+    {
+      "name": "Skift",
+      "kernel": "/boot/hjert",
+      "protocol": "handover",
+      "modules": [
+        {
+          "name": "init",
+          "module": "/boot/skift/modules/init"
+        }
+      ]
+    },
+    {
+      "name": "Your Linux distro",
+      "kernel": "/boot/vmlinux",
+      "protocol": "linux",
+      "cmdline": "root=UUID=your-partition-uuid-here rw quiet",
+      "modules": [
+        {
+          "name": "initramfs",
+          "module": "/boot/initrd.tar.gz"
+        }
+      ]
+    },
+    {
+      "name": "Example Limine kernel",
+      "kernel": "/boot/example.elf",
+      "protocol": "limine",
+      "modules": [
+        {
+          "name": "module_cmdline",
+          "module": "/boot/module.example"
+        }
+      ]
+    },
+    {
+      "name": "Example UEFI application",
+      "kernel": "/boot/example.efi",
+      "protocol": "chainload"
+    }
+  ]
+}

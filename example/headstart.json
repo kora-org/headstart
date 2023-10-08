@@ -1,0 +1,9 @@
+{
+  "resolution": "1920x1080x32",
+  "entries": [
+    {
+      "name": "Example kernel",
+      "kernel": "/boot/example.elf"
+    }
+  ]
+}

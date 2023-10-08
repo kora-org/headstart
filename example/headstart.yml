@@ -1,4 +1,0 @@
-resolution: 1920x1080x32
-entries:
-  - name: Eaxmple kernel
-    kernel: boot:///boot/example.elf
