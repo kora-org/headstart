@@ -34,8 +34,7 @@ pub fn efi_main() !uefi.Status {
     std.log.info("Compiled with Zig v{}", .{builtin.zig_version});
     std.log.info("All your {s} are belong to us", .{"codebase"});
     console.print("i hate myslfe\n", .{}) catch unreachable;
-    try memmap.init();
-    try memmap.memmap.minify();
+    try memmap.memmap.init();
     std.log.debug("Memory map layout:", .{});
     for (memmap.memmap.entries) |entry|
         std.log.debug("  base=0x{x:0>16}, length=0x{x:0>16}, type={s}", .{ entry.base, entry.length, @tagName(entry.type) });
