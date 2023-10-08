@@ -3,6 +3,7 @@ const uefi = std.os.uefi;
 const builtin = @import("builtin");
 const utils = @import("utils.zig");
 const console = @import("console/flanterm.zig");
+const memmap = @import("memmap.zig");
 pub const panic = @import("panic.zig").panic;
 
 pub const std_options = struct {
@@ -33,6 +34,8 @@ pub fn efi_main() !uefi.Status {
     std.log.info("Compiled with Zig v{}", .{builtin.zig_version});
     std.log.info("All your {s} are belong to us", .{"codebase"});
     console.print("i hate myslfe\n", .{}) catch unreachable;
+    try memmap.init();
+    std.log.info("Memory map: {any}", .{memmap.memmap});
     @panic("h");
 }
 
