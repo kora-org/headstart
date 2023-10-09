@@ -72,7 +72,7 @@ pub fn loadKernel(kernel: Config.Entry) !void {
     var kernel_file = try filesystem.open(kernel.kernel);
     var header = try std.elf.Header.read(kernel_file);
     var iterator = header.section_header_iterator(kernel_file);
-    std.log.debug("Section headers:");
+    std.log.debug("Section headers:", .{});
     while (try iterator.next()) |i|
         std.log.debug("  - {any}", .{i});
     try kernel_file.close();
