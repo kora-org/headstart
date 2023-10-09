@@ -76,3 +76,8 @@ pub fn closeProtocols(comptime T: type, protocols: []protocolHandlePair(T)) !voi
     }
     uefi.pool_allocator.free(protocols);
 }
+
+pub fn waitForEvent(event: uefi.Event) !void {
+    var index: usize = 0;
+    try boot_services.waitForEvent(1, @ptrCast(&event), &index).err();
+}

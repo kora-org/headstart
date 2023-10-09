@@ -3,7 +3,8 @@
   "entries": [
     {
       "name": "Example kernel",
-      "kernel": "/boot/example.elf"
+      "kernel": "/boot/example.elf",
+      "protocol": "none"
     }
   ]
 }

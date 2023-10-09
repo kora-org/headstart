@@ -31,15 +31,15 @@ pub const File = struct {
     }
 
     pub fn seekTo(self: *File, pos: u64) !void {
-        self.pos = pos;
+        self.position = pos;
     }
 
     pub fn seekBy(self: *File, pos: i64) !void {
-        self.pos += pos;
+        self.position += pos;
     }
 
     pub fn getPos(self: *File) !u64 {
-        return self.pos;
+        return self.position;
     }
 
     pub fn getSize(self: *File) !u64 {

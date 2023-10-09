@@ -4,6 +4,7 @@ const builtin = @import("builtin");
 const build_options = @import("build_options");
 const utils = @import("utils.zig");
 const console = @import("console/flanterm.zig");
+const keyboard = @import("keyboard.zig");
 const memmap = @import("memmap.zig");
 const filesystem = @import("filesystem.zig");
 const config = @import("config.zig");
@@ -32,6 +33,7 @@ pub fn efi_main() !uefi.Status {
     utils.runtime_services = uefi.system_table.runtime_services;
     utils.gop = try utils.loadProtocol(uefi.protocols.GraphicsOutputProtocol);
     console.init();
+    try keyboard.init();
     try filesystem.init();
 
     std.log.info("\x1b[96mHeadstart\x1b[0m version {s}", .{build_options.version});
