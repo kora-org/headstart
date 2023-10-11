@@ -1,23 +1,30 @@
-OUTPUT_FORMAT(elf64-x86-64)
 ENTRY(_start)
 
-SECTIONS
-{
-	.text : ALIGN(0x1000)
-	{
-		*(.text)
-	}
-	.data : ALIGN(0x1000)
-	{
-		*(.data)
-	}
-	.rodata : ALIGN(0x1000)
-	{
-		*(.rodata)
-	}
-	.bss : ALIGN(0x1000)
-	{
-		*(COMMON)
-		*(.bss)
-	}
+SECTIONS {
+    . = 0x80000000;
+
+    .text : {
+        *(.text .text.*)
+    } :text
+
+    . += CONSTANT(MAXPAGESIZE);
+
+    .rodata : {
+        *(.rodata .rodata.*)
+    } :rodata
+
+    . += CONSTANT(MAXPAGESIZE);
+
+    .data : {
+        *(.data .data.*)
+    } :data
+
+    .bss : {
+        *(COMMON)
+        *(.bss .bss.*)
+    } :data
+
+    /DISCARD/ :{
+        *(.note .note.*)
+    }
 }

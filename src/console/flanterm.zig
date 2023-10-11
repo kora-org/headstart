@@ -53,13 +53,13 @@ pub fn disableCursor() void {
 }
 
 pub fn setCursorPosition(x: usize, y: usize) void {
-    console.set_cursor_pos(x, y);
+    console.set_cursor_pos.?(console, x, y);
 }
 
 pub fn getCursorPosition() usize {
     var x: usize = 0;
     var y: usize = 0;
-    console.get_cursor_pos(&x, &y);
+    console.get_cursor_pos.?(console, &x, &y);
     return x + y;
 }
 
@@ -70,7 +70,7 @@ pub fn clear() void {
 pub fn putCharAt(char: u8, x_: usize, y_: usize) void {
     var backup_x: usize = 0;
     var backup_y: usize = 0;
-    console.get_cursor_pos(&backup_x, &backup_y);
+    console.get_cursor_pos.?(console, &backup_x, &backup_y);
 
     var x = x_;
     var y = y_;
@@ -81,13 +81,13 @@ pub fn putCharAt(char: u8, x_: usize, y_: usize) void {
     if (&y_ == undefined)
         y = backup_y;
 
-    console.set_cursor_pos(x, y);
+    console.set_cursor_pos.?(console, x, y);
     putChar(char);
-    console.set_cursor_pos(backup_x, backup_y);
+    console.set_cursor_pos.?(console, backup_x, backup_y);
 }
 
 pub fn putChar(char: u8) !void {
-    console.raw_putchar(char);
+    console.raw_putchar.?(console, char);
     try utils.blit(framebuffer);
 }
 

@@ -121,7 +121,7 @@ const MemoryMap = struct {
     pub fn init(self: *@This()) !void {
         self.memory_map.ptr = @ptrCast(@alignCast(try uefi.pool_allocator.alloc(u8, memory_map_size)));
         self.memory_map.len = memory_map_size;
-        try uefi.system_table.boot_services.?.getMemoryMap(&self.memory_map.len, @ptrCast(@alignCast(self.memory_map.ptr)), &self.key, &self.desc_size, &self.desc_version).err();
+        try utils.boot_services.getMemoryMap(&self.memory_map.len, @ptrCast(@alignCast(self.memory_map.ptr)), &self.key, &self.desc_size, &self.desc_version).err();
 
         var iter = Iterator{ .map = self };
         var num_entries: usize = 0;

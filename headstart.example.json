@@ -48,7 +48,7 @@
     },
     {
       "name": "Example UEFI application",
-      "kernel": "/boot/example.efi",
+      "kernel": "/EFI/BOOT/BOOTX64.EFI",
       "protocol": "chainload"
     }
   ]

@@ -141,9 +141,9 @@ fn run(b: *std.Build, arch: Arch) !void {
             "mkdir -p zig-out/efi-root/EFI/BOOT && ",
             "mkdir -p zig-out/efi-root/boot && ",
             "cp zig-out/bin/headstart.efi zig-out/efi-root/EFI/BOOT/", boot_efi_filename, " && ",
-            "clang -target x86_64-unknown-elf -nostdlib -ffreestanding -c example/main.c -o zig-cache/kernel.o && ",
+            "clang -target x86_64-unknown-elf -nostdlib -ffreestanding -fno-stack-protector -mno-red-zone -c example/main.c -o zig-cache/kernel.o && ",
             "ld.lld -Texample/linker.ld -nostdlib zig-cache/kernel.o -o zig-out/efi-root/boot/example.elf && ",
-            "cp example/headstart.json zig-out/efi-root/headstart.json && ",
+            "cp headstart.example.json zig-out/efi-root/headstart.json && ",
         }),
         try std.mem.concat(b.allocator, u8, switch (arch) {
             .x86_64 => &[_][]const u8{

@@ -7,4 +7,6 @@ typedef struct {
 
 void _start(headstart_hdr *headstart) {
     headstart->print("Hello world.\n");
+    while (1)
+        asm volatile ("hlt");
 }
