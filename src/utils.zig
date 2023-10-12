@@ -7,7 +7,8 @@ pub var runtime_services: *uefi.tables.RuntimeServices = undefined;
 pub var gop: *uefi.protocols.GraphicsOutputProtocol = undefined;
 
 pub fn blit(framebuffer: []u8) !void {
-    try gop.blt(@ptrCast(framebuffer), .BltBufferToVideo, 0, 0, 0, 0, gop.mode.info.horizontal_resolution, gop.mode.info.vertical_resolution, 0).err();
+    if (gop.mode.frame_buffer_base == 0)
+        try gop.blt(@ptrCast(framebuffer), .BltBufferToVideo, 0, 0, 0, 0, gop.mode.info.horizontal_resolution, gop.mode.info.vertical_resolution, 0).err();
 }
 
 pub fn halt() noreturn {
@@ -18,6 +19,37 @@ pub fn halt() noreturn {
             else => unreachable,
         }
     }
+}
+
+pub const CpuidResult = struct {
+    eax: u32,
+    ebx: u32,
+    ecx: u32,
+    edx: u32,
+};
+
+pub fn cpuid(leaf: u32, sub_leaf: u32) CpuidResult {
+    var eax: u32 = undefined;
+    var ebx: u32 = undefined;
+    var ecx: u32 = undefined;
+    var edx: u32 = undefined;
+
+    asm volatile ("cpuid"
+        : [eax] "={eax}" (eax),
+          [ebx] "={ebx}" (ebx),
+          [ecx] "={ecx}" (ecx),
+          [edx] "={edx}" (edx),
+        : [leaf] "{eax}" (leaf),
+          [sub_leaf] "{ecx}" (sub_leaf),
+        : "memory"
+    );
+
+    return .{
+        .eax = eax,
+        .ebx = ebx,
+        .ecx = ecx,
+        .edx = edx,
+    };
 }
 
 pub fn loadProtocol(comptime T: type) !*T {

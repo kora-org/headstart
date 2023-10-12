@@ -19,11 +19,13 @@ export fn _free(ptr: ?*anyopaque, _: usize) callconv(.C) void {
 }
 
 pub fn init() void {
-    framebuffer = uefi.pool_allocator.alloc(u8, utils.gop.mode.info.horizontal_resolution * utils.gop.mode.info.vertical_resolution * 4) catch unreachable;
+    if (utils.gop.mode.frame_buffer_base == 0)
+        framebuffer = uefi.pool_allocator.alloc(u8, utils.gop.mode.info.horizontal_resolution * utils.gop.mode.info.vertical_resolution * 4) catch unreachable;
+
     console = c.flanterm_fb_init(
         &_malloc,
         &_free,
-        @intFromPtr(framebuffer.ptr),
+        if (utils.gop.mode.frame_buffer_base != 0) utils.gop.mode.frame_buffer_base else @intFromPtr(framebuffer.ptr),
         utils.gop.mode.info.horizontal_resolution,
         utils.gop.mode.info.vertical_resolution,
         utils.gop.mode.info.horizontal_resolution * 4,
@@ -44,16 +46,19 @@ pub fn init() void {
     );
 }
 
-pub fn enableCursor() void {
+pub fn enableCursor() !void {
     console.cursor_enabled = true;
+    try utils.blit(framebuffer);
 }
 
-pub fn disableCursor() void {
+pub fn disableCursor() !void {
     console.cursor_enabled = false;
+    try utils.blit(framebuffer);
 }
 
-pub fn setCursorPosition(x: usize, y: usize) void {
+pub fn setCursorPosition(x: usize, y: usize) !void {
     console.set_cursor_pos.?(console, x, y);
+    try utils.blit(framebuffer);
 }
 
 pub fn getCursorPosition() usize {
@@ -63,8 +68,9 @@ pub fn getCursorPosition() usize {
     return x + y;
 }
 
-pub fn clear() void {
+pub fn clear() !void {
     console.clear.?(console, true);
+    try utils.blit(framebuffer);
 }
 
 pub fn putCharAt(char: u8, x_: usize, y_: usize) void {

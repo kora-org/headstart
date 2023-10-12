@@ -1,7 +1,14 @@
 ENTRY(_start)
 
+PHDRS {
+    null PT_NULL FLAGS(0);
+    text PT_LOAD FLAGS((1 << 0) | (1 << 2));
+    rodata PT_LOAD FLAGS((1 << 2));
+    data PT_LOAD FLAGS((1 << 1) | (1 << 2));
+}
+
 SECTIONS {
-    . = 0x80000000;
+    . = 0xffffffff80000000;
 
     .text : {
         *(.text .text.*)

@@ -54,7 +54,7 @@ pub fn efi_main() !uefi.Status {
     defer serialized.deinit();
     try config.showMenu(serialized.value);
 
-    @panic("h");
+    unreachable;
 }
 
 export fn __chkstk() void {}

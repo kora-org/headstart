@@ -6,6 +6,7 @@ const utils = @import("utils.zig");
 const console = @import("console/flanterm.zig");
 const keyboard = @import("keyboard.zig");
 const filesystem = @import("filesystem.zig");
+const limine = @import("protocols/limine.zig");
 
 pub const Config = struct {
     resolution: ?[]const u8 = null,
@@ -16,6 +17,7 @@ pub const Config = struct {
         kernel: []const u8,
         protocol: Protocol,
         cmdline: ?[]const u8 = null,
+        kaslr: ?bool = false,
         modules: ?[]Module = null,
     };
 
@@ -34,11 +36,11 @@ pub const Config = struct {
 };
 
 pub fn showMenu(config: Config) !void {
-    console.disableCursor();
-    console.clear();
+    try console.disableCursor();
+    try console.clear();
     var selected: usize = 0;
     while (true) {
-        console.setCursorPosition(0, 0);
+        try console.setCursorPosition(0, 0);
         try console.print("\n", .{});
         try console.print("  \x1b[92mHeadstart\x1b[0m v{s}\n\n", .{build_options.version});
         for (config.entries, 0..) |entry, i| {
@@ -68,8 +70,8 @@ pub fn showMenu(config: Config) !void {
             }
             if (key_event.scan_code.char) |key| {
                 if (key == '\n') {
-                    console.clear();
-                    console.enableCursor();
+                    try console.clear();
+                    try console.enableCursor();
                     try loadKernel(config.entries[selected]);
                     break;
                 }
@@ -112,30 +114,8 @@ pub fn loadKernel(kernel: Config.Entry) !void {
         //        try utils.boot_services.exit(handle, status, exit_data_size, @constCast(exit_data)).err();
         //    }
         //},
-        else => {
-            var kernel_file = try filesystem.open(kernel.kernel);
-            var buffer = try kernel_file.reader().readAllAlloc(uefi.pool_allocator, @intCast(try kernel_file.getSize()));
-            try kernel_file.seekableStream().seekTo(0);
-            var header = try std.elf.Header.read(kernel_file);
-            if (header.machine.toTargetCpuArch() == builtin.cpu.arch) {
-                var iterator = header.program_header_iterator(kernel_file);
-                while (try iterator.next()) |phdr| {
-                    if (phdr.p_type == std.elf.PT_LOAD) {
-                        @memcpy(@as([*]u8, @ptrFromInt(phdr.p_paddr))[0..phdr.p_filesz], @as([*]u8, @ptrCast(buffer))[phdr.p_offset .. phdr.p_offset + phdr.p_filesz]);
-                        if (phdr.p_memsz > phdr.p_filesz)
-                            @memset(@as([*]u8, @ptrFromInt(phdr.p_paddr))[phdr.p_filesz..phdr.p_memsz], 0);
-                    }
-                }
-                const HeadstartHeader = extern struct { print: *const fn ([*c]const u8) callconv(.SysV) void };
-                const headstart_header = HeadstartHeader{ .print = &example_print };
-                const entry = @as(*const fn (*const HeadstartHeader) callconv(.SysV) void, @ptrFromInt(header.entry));
-                entry(&headstart_header);
-                utils.halt();
-            } else {
-                return error.IncompatibleElf;
-            }
-            try kernel_file.close();
-        },
+        .limine => try limine.load(kernel),
+        else => return error.UnknownProtocol,
     }
 }
 
