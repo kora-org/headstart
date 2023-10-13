@@ -53,7 +53,6 @@ pub fn load(kernel: Config.Entry) !void {
         while (i < std.mem.alignBackward(usize, image_size - bss_size, 8)) : (i += 8) {
             const chunk = @as([*]u64, @ptrFromInt(@intFromPtr(image_base.ptr) + i));
             if (chunk[0] == limine.COMMON_MAGIC[0] and chunk[1] == limine.COMMON_MAGIC[1]) {
-                std.log.info("Found Limine request!", .{});
                 const request_header: *RequestHeader = @ptrCast(chunk);
 
                 if (std.mem.eql(u64, &request_header.id, &limine.Identifiers.Framebuffer)) {
@@ -65,13 +64,14 @@ pub fn load(kernel: Config.Entry) !void {
                         .pitch = utils.gop.mode.info.horizontal_resolution * 4,
                         .bpp = 32,
                         .memory_model = .Rgb,
+                        // TODO: actually use actual rgb mask size/shift values from gop
                         .red_mask_size = 8,
                         .red_mask_shift = 0,
                         .green_mask_size = 8,
                         .green_mask_shift = 8,
                         .blue_mask_size = 8,
                         .blue_mask_shift = 16,
-                        ._unused = @as([7]u8, "_unused".*),
+                        ._unused = "amogus".*,
                         .edid_size = 0,
                         .edid = null,
                         .mode_count = 0,
@@ -83,14 +83,16 @@ pub fn load(kernel: Config.Entry) !void {
                         .framebuffers = framebuffers[0..],
                     };
                     request.* = .{ .response = &response };
+                    std.log.debug("{any}", .{framebuffer});
                 } else return error.InvalidRequest;
             }
         }
 
         try kernel_file.close();
-        _ = utils.boot_services.exitBootServices(uefi.handle, memmap.memmap.key);
-        @as(*const fn () callconv(.SysV) void, @ptrFromInt(header.entry))();
+        while (utils.boot_services.exitBootServices(uefi.handle, memmap.memmap.key) == .InvalidParameter)
+            try memmap.memmap.init();
 
+        @as(*const fn () callconv(.SysV) void, @ptrFromInt(header.entry))();
         unreachable;
     } else {
         try kernel_file.close();

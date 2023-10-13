@@ -19,6 +19,5 @@ pub fn panic(message: []const u8, _: ?*std.builtin.StackTrace, return_address: ?
     //}
 
     std.log.err("System halted.", .{});
-
     utils.halt();
 }
