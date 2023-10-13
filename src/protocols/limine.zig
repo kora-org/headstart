@@ -71,7 +71,7 @@ pub fn load(kernel: Config.Entry) !void {
                         .green_mask_shift = 8,
                         .blue_mask_size = 8,
                         .blue_mask_shift = 16,
-                        ._unused = "amogus".*,
+                        ._unused = "_unused".*,
                         .edid_size = 0,
                         .edid = null,
                         .mode_count = 0,
@@ -83,7 +83,6 @@ pub fn load(kernel: Config.Entry) !void {
                         .framebuffers = framebuffers[0..],
                     };
                     request.* = .{ .response = &response };
-                    std.log.debug("{any}", .{framebuffer});
                 } else return error.InvalidRequest;
             }
         }
