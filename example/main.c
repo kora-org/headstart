@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 #include "limine.h"
 
 static volatile struct limine_framebuffer_request framebuffer_request = {

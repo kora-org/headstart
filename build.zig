@@ -143,8 +143,8 @@ fn run(b: *std.Build, arch: Arch) !void {
             "mkdir -p zig-out/efi-root/EFI/BOOT && ",
             "mkdir -p zig-out/efi-root/boot && ",
             "cp zig-out/bin/headstart.efi zig-out/efi-root/EFI/BOOT/", boot_efi_filename, " && ",
-            //"clang -target x86_64-unknown-elf -nostdlib -ffreestanding -fno-stack-protector -fno-stack-check -fno-lto -fpie -mno-red-zone -c example/main.c -o zig-cache/kernel.o && ",
-            //"ld.lld -Texample/linker.ld -static -nostdlib -pie -z text -z max-page-size=0x1000 zig-cache/kernel.o -o zig-out/efi-root/boot/example.elf && ",
+            "clang -target x86_64-unknown-elf -nostdlib -ffreestanding -fno-stack-protector -fno-stack-check -fno-lto -fpie -mno-red-zone -c example/main.c -o zig-cache/kernel.o && ",
+            "ld.lld -Texample/linker.ld -static -nostdlib -pie -z text -z max-page-size=0x1000 zig-cache/kernel.o -o zig-out/efi-root/boot/example.elf && ",
             "cp headstart.example.json zig-out/efi-root/headstart.json && ",
         }),
         try std.mem.concat(b.allocator, u8, switch (arch) {

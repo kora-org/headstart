@@ -4,6 +4,7 @@ const builtin = @import("builtin");
 const utils = @import("../utils.zig");
 const filesystem = @import("../filesystem.zig");
 const memmap = @import("../memmap.zig");
+const vmm = @import("../vmm.zig");
 const Config = @import("../config.zig").Config;
 const limine = @import("limine");
 
@@ -87,10 +88,20 @@ pub fn load(kernel: Config.Entry) !void {
             }
         }
 
+        //iterator = header.program_header_iterator(kernel_file);
+        //try vmm.init(&iterator, image_size, min_vaddr);
+        //vmm.pagemap.load();
+
+        var stack = try uefi.pool_allocator.alloc(u8, 65536);
+
         try kernel_file.close();
         while (utils.boot_services.exitBootServices(uefi.handle, memmap.memmap.key) == .InvalidParameter)
             try memmap.memmap.init();
 
+        // zig fmt: off
+        // zig fmt please kys i just want to make my asm all in one line
+        asm volatile ("mov %[stack], %%rsp" :: [stack] "q" (@intFromPtr(stack.ptr) + 65536) : "memory");
+        // zig fmt: on
         @as(*const fn () callconv(.SysV) void, @ptrFromInt(header.entry))();
         unreachable;
     } else {

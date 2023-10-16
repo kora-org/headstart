@@ -69,7 +69,7 @@ pub fn getCursorPosition() usize {
 }
 
 pub fn clear() !void {
-    console.clear.?(console, false);
+    console.clear.?(console, true);
     try utils.blit(framebuffer);
 }
 
